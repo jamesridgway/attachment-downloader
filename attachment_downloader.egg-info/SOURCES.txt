@@ -1,0 +1,8 @@
+setup.py
+attachment_downloader/__init__.py
+attachment_downloader/attachment_downloader.py
+attachment_downloader.egg-info/PKG-INFO
+attachment_downloader.egg-info/SOURCES.txt
+attachment_downloader.egg-info/dependency_links.txt
+attachment_downloader.egg-info/top_level.txt
+bin/attachment-downloader
