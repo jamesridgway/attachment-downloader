@@ -7,9 +7,6 @@ setup(
     author='James Ridgway',
     url='https://github.com/jamesridgway/attachment-downloader',
     license='MIT',
-    entry_points={
-        'console_scripts': [
-            'attachment-downloader = attachment_downloader',
-        ]
-    }
+    packages=['attachment_downloader'],
+    scripts=['bin/attachment-downloader']
 )

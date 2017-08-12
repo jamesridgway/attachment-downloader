@@ -1,49 +1,12 @@
-import imaplib
+#!/usr/bin/env python
+
 import logging
+import os
+import sys
 from getpass import getpass
 from optparse import OptionParser
 
-import sys
-
-import os
-
-from mail_message import MailMessage
-
-
-class AttachmentDownloader:
-    def __init__(self, host):
-        self.mail = imaplib.IMAP4_SSL(host)
-
-    def login(self, username, password):
-        self.mail.login(username, password)
-
-    def list_messages(self, imap_folder):
-
-        select_status, _ = self.mail.select(imap_folder)
-
-        if select_status != 'OK':
-            print("Folder not found")
-            return
-
-        search_status, search_data = self.mail.search(None, "ALL")
-        if search_status != 'OK':
-            print("No messages found!")
-            return
-
-        messages = []
-        for num in search_data[0].split():
-            fetch_status, data = self.mail.fetch(num, '(RFC822)')
-            if fetch_status != 'OK':
-                print("ERROR getting message", num)
-                return
-            messages.append(MailMessage(data[0][1]))
-
-        self.mail.close()
-        return messages
-
-    def logout(self):
-        self.mail.logout()
-
+from attachment_downloader.attachment_downloader import AttachmentDownloader
 
 if __name__ == '__main__':
 
@@ -86,7 +49,8 @@ if __name__ == '__main__':
     for message in messages:
         for attachment_name in message.list_attachments():
             download_filename = os.path.join(options.download_folder, attachment_name)
-            logging.info("Downloading attachment '%s' for message '%s': %s", attachment_name, message.subject, download_filename)
+            logging.info("Downloading attachment '%s' for message '%s': %s", attachment_name, message.subject,
+                         download_filename)
             fp = open(download_filename, 'wb')
             fp.write(message.get_attachment_payload(attachment_name))
             fp.close()
@@ -96,4 +60,3 @@ if __name__ == '__main__':
     downloader.logout()
 
     logging.info("Done")
-
