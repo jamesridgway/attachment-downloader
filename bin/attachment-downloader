@@ -6,23 +6,38 @@ import sys
 from getpass import getpass
 from optparse import OptionParser
 
+from jinja2 import Template
+
 from attachment_downloader.attachment_downloader import AttachmentDownloader
 
 if __name__ == '__main__':
 
+    class InfoFilter(logging.Filter):
+        def filter(self, rec):
+            return rec.levelno in (logging.DEBUG, logging.INFO)
+
+
     std_out_stream_handler = logging.StreamHandler(sys.stdout)
     std_out_stream_handler.setLevel(logging.DEBUG)
+    std_out_stream_handler.addFilter(InfoFilter())
     std_out_stream_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
+    std_err_stream_handler = logging.StreamHandler(sys.stderr)
+    std_err_stream_handler.setLevel(logging.WARNING)
+    std_err_stream_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     root_logger.addHandler(std_out_stream_handler)
+    root_logger.addHandler(std_err_stream_handler)
 
     parser = OptionParser()
     parser.add_option("--host", dest="host", help="IMAP Host")
     parser.add_option("--username", dest="username", help="IMAP Username")
     parser.add_option("--password", dest="password", help="IMAP Password")
     parser.add_option("--imap-folder", dest="imap_folder", help="IMAP Folder to extract attachments from")
+    parser.add_option("--filename-template", dest="filename_template", help="Attachment filename (jinja2) template.",
+                      default="{{ attachment_name }}")
     parser.add_option("--output", dest="download_folder", help="Output directory for attachment download")
 
     (options, args) = parser.parse_args()
@@ -43,15 +58,24 @@ if __name__ == '__main__':
     logging.info("Logging in to: '%s' as '%s'", options.host, options.username)
     downloader.login(options.username, password)
 
-    logging.info("Listing messages folder folder: %s", options.imap_folder)
+    logging.info("Listing messages in folder: %s", options.imap_folder)
     messages = downloader.list_messages(options.imap_folder)
 
     for message in messages:
         for attachment_name in message.list_attachments():
-            download_filename = os.path.join(options.download_folder, attachment_name)
+            filename_template = Template(options.filename_template)
+            download_filename = filename_template.render(attachment_name=attachment_name,
+                                                         subject=message.subject,
+                                                         message_id=message.message_id,
+                                                         local_date=message.local_date)
+
+            download_path = os.path.join(options.download_folder, download_filename)
+            os.makedirs(os.path.dirname(os.path.abspath(download_path)), exist_ok=True)
             logging.info("Downloading attachment '%s' for message '%s': %s", attachment_name, message.subject,
-                         download_filename)
-            fp = open(download_filename, 'wb')
+                         download_path)
+            if os.path.isfile(download_path):
+                logging.warning("Overwriting file: '%s'", download_path)
+            fp = open(download_path, 'wb')
             fp.write(message.get_attachment_payload(attachment_name))
             fp.close()
     logging.info('Finished processing messages')
