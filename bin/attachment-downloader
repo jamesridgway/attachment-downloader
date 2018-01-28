@@ -31,6 +31,10 @@ if __name__ == '__main__':
     root_logger.addHandler(std_out_stream_handler)
     root_logger.addHandler(std_err_stream_handler)
 
+    if sys.version_info[0] < 3:
+        logging.error("This application requires Python 3+, you are running version: %s", sys.version)
+        exit(1)
+
     parser = OptionParser()
     parser.add_option("--host", dest="host", help="IMAP Host")
     parser.add_option("--username", dest="username", help="IMAP Username")
