@@ -1,0 +1,17 @@
+language: python
+python:
+- '3.4'
+- '3.5'
+- '3.6'
+- nightly
+install:
+- pip install -r requirements.txt
+script:
+- py.test
+deploy:
+  provider: pypi
+  user: jamesridgway
+  on:
+    tags: true
+  password:
+    secure: i0NmS3OzGDYVm2wT0odHCI1/AhhNDTZAiW/v7r6Oskr+SL9CEdf1bvADI0nO9iLKnmOWSb3QXI2lb/6TCcpX3ExbngJ+Gxzlof0nt3bhuvG2JudTWbQxRZIKZgd0SgFutPsH6ZvhHdF1UF46sAmbHWBC896pak52M5dV8SK9wbazAJ/9xG2LhdX0sK4KIPge0Cv3fV9PADRjiC65izz1mIE9Ne3YRtQkrhmhWZq6seujZz+c7FPDWRuSKgKCwWu9LAG+LAHvrn5rbft8+eYqW7XNoh2SUP55CmLMQeKwPiisJmZm8kkQUCVjhoOQsE7wMiAkj8yp29L0dl64T+eEhi+iFqXQ5ZSTzf0/5Z2RNqCuuctrsTIzBX27nHISnHJIykorh2Og6Trd+FwNIMOHpkYs2eGLdB6vO83mKViTIBDN77u+XHuXk5h6ze+mqOPOhH6TVJXVe6L8PwSmmC0uCz5Npq2HTSxPXhFGtPQSEFtFhsDVVs9w1oObChaluYkWW1LoHWZbWjK5jejfcTBowkAsf7Lm8wN9x2LsDoadNF8ZTWtUHNSc4rM8cqLuYMqiKpF7fhz6THRa+Sj7Q3To/HHo0mMY9xeGnEVmBuUTYPKRFx0Oi6o6nDJm/j9xCGzC89E3hhJjmEw8YPxfuFCE73OSfZNUkHQhaquEH36J7IY=
