@@ -28,6 +28,10 @@ Example:
     $ attachment-downloader --host imap.example.com --username mail@example.com --password pa55word \\
         --imap-folder invoices --output ~/Downloads
 
+## Requirements
+This tool requires Python 3+
+
+This is not compatible with Python 2.
 
 ## Filename Template
 By default attachments will be downloaded using their original filename to the folder specified by `-output`.
