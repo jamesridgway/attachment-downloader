@@ -40,6 +40,7 @@ class MailMessage:
     def __init__(self, data):
         self.msg = email.message_from_string(data.decode('utf-8'))
         self.subject = self.msg['Subject']
+        self.message_id = self.msg['message-id']
         self.raw_date = self.msg['Date']
         date_tuple = email.utils.parsedate_tz(self.raw_date)
         if date_tuple:

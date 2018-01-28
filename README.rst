@@ -23,11 +23,17 @@ Usage:
       --password=PASSWORD   IMAP Password
       --imap-folder=IMAP_FOLDER
                             IMAP Folder to extract attachments from
+      --filename-template=FILENAME_TEMPLATE
+                            Attachment filename (jinja2) template.
       --output=DOWNLOAD_FOLDER
                             Output directory for attachment download
+
 
 Example:
 
 ::
 
-    $ attachment-downloader --host imap.example.com --username mail@example.com --password pa55word --imap-folder invoices --output ~/Downloads
+    $ attachment-downloader --host imap.example.com --username mail@example.com --password pa55word \\
+        --imap-folder invoices --output ~/Downloads
+
+For full instructions and documentation visit: https://github.com/jamesridgway/attachment-downloader
