@@ -23,7 +23,13 @@ class AttachmentDownloader:
             return
 
         messages = []
-        for num in search_data[0].split():
+
+        data_list = search_data[0].split()        
+
+        count = len(data_list)
+
+        for (idx, num) in enumerate(data_list):
+            print("Downloading %i of %i ..." % (idx + 1, count))
             fetch_status, data = self.mail.fetch(num, '(RFC822)')
             if fetch_status != 'OK':
                 print("ERROR getting message", num)
