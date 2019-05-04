@@ -67,21 +67,25 @@ if __name__ == '__main__':
 
     for message in messages:
         for attachment_name in message.list_attachments():
-            filename_template = Template(options.filename_template)
-            download_filename = filename_template.render(attachment_name=attachment_name,
-                                                         subject=message.subject,
-                                                         message_id=message.message_id,
-                                                         local_date=message.local_date)
+            try:
+                filename_template = Template(options.filename_template)
+                download_filename = filename_template.render(attachment_name=attachment_name,
+                                                             subject=message.subject,
+                                                             message_id=message.message_id,
+                                                             local_date=message.local_date)
 
-            download_path = os.path.join(options.download_folder, download_filename)
-            os.makedirs(os.path.dirname(os.path.abspath(download_path)), exist_ok=True)
-            logging.info("Downloading attachment '%s' for message '%s': %s", attachment_name, message.subject,
-                         download_path)
-            if os.path.isfile(download_path):
-                logging.warning("Overwriting file: '%s'", download_path)
-            fp = open(download_path, 'wb')
-            fp.write(message.get_attachment_payload(attachment_name))
-            fp.close()
+                download_path = os.path.join(options.download_folder, download_filename)
+                os.makedirs(os.path.dirname(os.path.abspath(download_path)), exist_ok=True)
+                logging.info("Downloading attachment '%s' for message '%s': %s", attachment_name, message.subject,
+                             download_path)
+                if os.path.isfile(download_path):
+                    logging.warning("Overwriting file: '%s'", download_path)
+                fp = open(download_path, 'wb')
+                fp.write(message.get_attachment_payload(attachment_name))
+                fp.close()
+            except:
+                logging.error('Error saving file. Continuing...')
+
     logging.info('Finished processing messages')
 
     logging.info('Logging out of: %s', options.host)
