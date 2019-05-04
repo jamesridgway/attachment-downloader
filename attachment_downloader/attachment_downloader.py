@@ -38,7 +38,7 @@ class AttachmentDownloader:
 
 class MailMessage:
     def __init__(self, data):
-        self.msg = email.message_from_string(data.decode('utf-8'))
+        self.msg = email.message_from_string(self.decode(data))
         self.subject = self.msg['Subject']
         self.message_id = self.msg['message-id']
         self.raw_date = self.msg['Date']
@@ -66,3 +66,11 @@ class MailMessage:
             file_name = part.get_filename()
             if file_name == attachment_filename:
                 return part.get_payload(decode=True)
+
+    def decode(self, data):
+        encodings=('utf8', 'cp1252')
+        for encoding in encodings:
+            try:
+                return data.decode(encoding)
+            except:
+                pass
