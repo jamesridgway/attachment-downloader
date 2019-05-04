@@ -30,11 +30,16 @@ class AttachmentDownloader:
 
         for (idx, num) in enumerate(data_list):
             print("Downloading %i of %i ..." % (idx + 1, count))
-            fetch_status, data = self.mail.fetch(num, '(RFC822)')
-            if fetch_status != 'OK':
-                print("ERROR getting message", num)
-                return
-            messages.append(MailMessage(data[0][1]))
+            try:
+                fetch_status, data = self.mail.fetch(num, '(RFC822)')
+                if fetch_status != 'OK':
+                    print("ERROR getting message", num)
+                    print("Continuing retrieval...")
+                else:
+                    messages.append(MailMessage(data[0][1]))
+            except:
+                print("Unexpected retrieval ERROR", num)
+                print("Continuing retrieval...")
 
         self.mail.close()
         return messages
