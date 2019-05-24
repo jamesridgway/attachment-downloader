@@ -85,3 +85,8 @@ class MailMessage:
                 return data.decode(encoding)
             except:
                 pass
+
+    @staticmethod
+    def delete(self, conn, msg_id):
+        conn.delete_messages(msg_id)
+        conn.expunge(msg_id)

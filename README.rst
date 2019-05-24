@@ -27,6 +27,7 @@ Usage:
                             Attachment filename (jinja2) template.
       --output=DOWNLOAD_FOLDER
                             Output directory for attachment download
+      --delete              Delete E-Mail from Mailbox if attachment was downloaded
 
 
 Example:
