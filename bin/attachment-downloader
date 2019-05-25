@@ -43,6 +43,7 @@ if __name__ == '__main__':
     parser.add_option("--filename-template", dest="filename_template", help="Attachment filename (jinja2) template.",
                       default="{{ attachment_name }}")
     parser.add_option("--output", dest="download_folder", help="Output directory for attachment download")
+    parser.add_option("--delete", dest="delete", action="store_true", help="Delete downloaed E-Mails from Mailbox")
 
     (options, args) = parser.parse_args()
 
@@ -80,11 +81,19 @@ if __name__ == '__main__':
                              download_path)
                 if os.path.isfile(download_path):
                     logging.warning("Overwriting file: '%s'", download_path)
-                fp = open(download_path, 'wb')
-                fp.write(message.get_attachment_payload(attachment_name))
-                fp.close()
-            except:
+
+                with open(download_path, "wb") as fp:
+                    fp.write(message.get_attachment_payload(attachment_name))
+
+            except Exception as e:
+                logging.exception(e)
                 logging.error('Error saving file. Continuing...')
+            else:
+                if options.delete:
+                    message.delete(downloader.mail, message.message_id)
+
+
+
 
     logging.info('Finished processing messages')
 
