@@ -87,6 +87,6 @@ class MailMessage:
                 pass
 
     @staticmethod
-    def delete(self, conn, msg_id):
+    def delete(conn, msg_id):
         conn.delete_messages(msg_id)
         conn.expunge(msg_id)
