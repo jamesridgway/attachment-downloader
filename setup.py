@@ -10,5 +10,5 @@ setup(
     license='MIT',
     packages=['attachment_downloader'],
     scripts=['bin/attachment-downloader'],
-    install_requires=["jinja2"]
+    install_requires=["jinja2", "imbox"]
 )
