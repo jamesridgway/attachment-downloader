@@ -22,7 +22,9 @@ Usage:
                             Attachment filename (jinja2) template.
       --output=DOWNLOAD_FOLDER
                             Output directory for attachment download
-      --delete              Delete E-Mail from Mailbox if attachment was downloaded
+      --delete              Delete downloaed E-Mails from Mailbox
+      --delete-copy-folder=DELETE_COPY_FOLDER
+                            IMAP folder to copy emails to before deleting them
 Example:
 
     $ attachment-downloader --host imap.example.com --username mail@example.com --password pa55word \\
