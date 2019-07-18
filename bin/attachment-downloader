@@ -3,12 +3,11 @@
 import logging
 import os
 import sys
+from imbox import Imbox
 from getpass import getpass
 from optparse import OptionParser
 
 from jinja2 import Template
-
-from attachment_downloader.attachment_downloader import AttachmentDownloader
 
 if __name__ == '__main__':
 
@@ -44,6 +43,7 @@ if __name__ == '__main__':
                       default="{{ attachment_name }}")
     parser.add_option("--output", dest="download_folder", help="Output directory for attachment download")
     parser.add_option("--delete", dest="delete", action="store_true", help="Delete downloaed E-Mails from Mailbox")
+    parser.add_option("--delete-copy-folder", dest="delete_copy_folder", help="IMAP folder to copy emails to before deleting them")
 
     (options, args) = parser.parse_args()
 
@@ -55,49 +55,55 @@ if __name__ == '__main__':
         parser.error('--folder parameter required')
     if not options.download_folder:
         parser.error('--output parameter required')
+    if options.delete_copy_folder and not options.delete:
+        parser.error('--delete parameter required when using --delete-copy-folder')
 
     password = options.password if options.password else getpass('IMAP Password: ')
 
-    downloader = AttachmentDownloader(options.host)
-
     logging.info("Logging in to: '%s' as '%s'", options.host, options.username)
-    downloader.login(options.username, password)
+    mail = Imbox(options.host, username=options.username, password=options.password)
 
-    logging.info("Listing messages in folder: %s", options.imap_folder)
-    messages = downloader.list_messages(options.imap_folder)
+    logging.info("Listing messages in folder: %s", '"' + options.imap_folder + '"')
+    messages = mail.messages(folder=options.imap_folder)
 
-    for message in messages:
-        for attachment_name in message.list_attachments():
+    for (uid, message) in messages:
+        mail.mark_seen(uid)
+        logging.info("Processing message '%s' subject '%s'", uid, message.subject)
+
+        for attachment in message.attachments:
             try:
                 filename_template = Template(options.filename_template)
-                download_filename = filename_template.render(attachment_name=attachment_name,
+                download_filename = filename_template.render(attachment_name=attachment.get('filename'),
                                                              subject=message.subject,
                                                              message_id=message.message_id,
-                                                             local_date=message.local_date)
+                                                             local_date=message.date)
 
                 download_path = os.path.join(options.download_folder, download_filename)
                 os.makedirs(os.path.dirname(os.path.abspath(download_path)), exist_ok=True)
-                logging.info("Downloading attachment '%s' for message '%s': %s", attachment_name, message.subject,
-                             download_path)
+                logging.info("Downloading attachment '%s' to path %s", attachment.get('filename'), download_path)
+
                 if os.path.isfile(download_path):
                     logging.warning("Overwriting file: '%s'", download_path)
 
                 with open(download_path, "wb") as fp:
-                    fp.write(message.get_attachment_payload(attachment_name))
+                    fp.write(attachment.get('content').read())
 
             except Exception as e:
                 logging.exception(e)
                 logging.error('Error saving file. Continuing...')
             else:
                 if options.delete:
-                    message.delete(downloader.mail, message.message_id)
+                    if options.delete_copy_folder:
+                        mail.copy(uid, '"' + options.delete_copy_folder + '"')
 
+                    mail.delete(uid)
 
 
 
     logging.info('Finished processing messages')
 
     logging.info('Logging out of: %s', options.host)
-    downloader.logout()
+    mail.logout()
 
     logging.info("Done")
+
