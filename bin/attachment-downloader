@@ -70,10 +70,11 @@ if __name__ == '__main__':
         mail.mark_seen(uid)
         logging.info("Processing message '%s' subject '%s'", uid, message.subject)
 
-        for attachment in message.attachments:
+        for idx, attachment in enumerate(message.attachments):
             try:
                 filename_template = Template(options.filename_template)
                 download_filename = filename_template.render(attachment_name=attachment.get('filename'),
+                                                             attachment_idx=idx,
                                                              subject=message.subject,
                                                              message_id=message.message_id,
                                                              local_date=message.date)

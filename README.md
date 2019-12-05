@@ -43,6 +43,7 @@ You can customise the download filename using a jinja2 template for the argument
 The following variables are supported:
 * `message_id`
 * `attachment_name`
+* `attachment_idx`
 * `subject`
 * `local_date`
 
