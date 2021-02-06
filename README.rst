@@ -23,11 +23,19 @@ Usage:
       --password=PASSWORD   IMAP Password
       --imap-folder=IMAP_FOLDER
                             IMAP Folder to extract attachments from
+      --subject-regex=SUBJECT_REGEX
+                            Regex that the subject must match against
+      --date-after=DATE_AFTER
+                            Select messages after this date
+      --date-before=DATE_BEFORE
+                            Select messages before this date
       --filename-template=FILENAME_TEMPLATE
                             Attachment filename (jinja2) template.
       --output=DOWNLOAD_FOLDER
                             Output directory for attachment download
-      --delete              Delete E-Mail from Mailbox if attachment was downloaded
+      --delete              Delete downloaded emails from Mailbox
+      --delete-copy-folder=DELETE_COPY_FOLDER
+                            IMAP folder to copy emails to before deleting them
 
 
 Example:
