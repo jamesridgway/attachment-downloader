@@ -43,7 +43,8 @@ if __name__ == '__main__':
                       default="{{ attachment_name }}")
     parser.add_option("--output", dest="download_folder", help="Output directory for attachment download")
     parser.add_option("--delete", dest="delete", action="store_true", help="Delete downloaed E-Mails from Mailbox")
-    parser.add_option("--delete-copy-folder", dest="delete_copy_folder", help="IMAP folder to copy emails to before deleting them")
+    parser.add_option("--delete-copy-folder", dest="delete_copy_folder",
+                      help="IMAP folder to copy emails to before deleting them")
 
     (options, args) = parser.parse_args()
 
@@ -52,7 +53,7 @@ if __name__ == '__main__':
     if not options.username:
         parser.error('--username parameter required')
     if not options.imap_folder:
-        parser.error('--folder parameter required')
+        parser.error('--imap-folder parameter required')
     if not options.download_folder:
         parser.error('--output parameter required')
     if options.delete_copy_folder and not options.delete:
@@ -68,14 +69,19 @@ if __name__ == '__main__':
 
     for (uid, message) in messages:
         mail.mark_seen(uid)
-        logging.info("Processing message '%s' subject '%s'", uid, message.subject)
+
+        subject = ''
+        if hasattr(message, 'subject'):
+            subject = message.subject
+
+        logging.info("Processing message '%s' subject '%s'", uid, subject)
 
         for idx, attachment in enumerate(message.attachments):
             try:
                 filename_template = Template(options.filename_template)
                 download_filename = filename_template.render(attachment_name=attachment.get('filename'),
                                                              attachment_idx=idx,
-                                                             subject=message.subject,
+                                                             subject=subject,
                                                              message_id=message.message_id,
                                                              local_date=message.date)
 
@@ -99,12 +105,9 @@ if __name__ == '__main__':
 
                     mail.delete(uid)
 
-
-
     logging.info('Finished processing messages')
 
     logging.info('Logging out of: %s', options.host)
     mail.logout()
 
     logging.info("Done")
-
