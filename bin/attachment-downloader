@@ -3,11 +3,24 @@ import datetime
 import logging
 import os
 import sys
+from copy import copy
+
 from imbox import Imbox
 from getpass import getpass
-from optparse import OptionParser
+from optparse import OptionParser, Option, OptionValueError
 
 from jinja2 import Template
+
+
+def valid_date(option, opt, value):
+    try:
+        parsed_value = datetime.datetime.fromisoformat(value)
+        if not parsed_value.tzinfo:
+            parsed_value = parsed_value.replace(tzinfo=datetime.timezone.utc)
+        return parsed_value
+    except ValueError:
+        raise OptionValueError( 'option %s: invalid date format: %r' % (opt, value))
+
 
 if __name__ == '__main__':
 
@@ -34,11 +47,22 @@ if __name__ == '__main__':
         logging.error("This application requires Python 3+, you are running version: %s", sys.version)
         exit(1)
 
-    parser = OptionParser()
+
+    class AttachmentDownloaderOption(Option):
+        TYPES = Option.TYPES + ('date',)
+        TYPE_CHECKER = copy(Option.TYPE_CHECKER)
+        TYPE_CHECKER['date'] = valid_date
+
+    parser = OptionParser(option_class=AttachmentDownloaderOption)
     parser.add_option("--host", dest="host", help="IMAP Host")
     parser.add_option("--username", dest="username", help="IMAP Username")
     parser.add_option("--password", dest="password", help="IMAP Password")
     parser.add_option("--imap-folder", dest="imap_folder", help="IMAP Folder to extract attachments from")
+    parser.add_option('--date-after', dest="date_after", type='date',
+                      help='Select messages after this date')
+    parser.add_option('--date-before', dest="date_before",
+                      type='date',
+                      help='Select messages before this date')
     parser.add_option("--filename-template", dest="filename_template", help="Attachment filename (jinja2) template.",
                       default="{{ attachment_name }}")
     parser.add_option("--output", dest="download_folder", help="Output directory for attachment download")
@@ -52,8 +76,6 @@ if __name__ == '__main__':
         parser.error('--host parameter required')
     if not options.username:
         parser.error('--username parameter required')
-    if not options.imap_folder:
-        parser.error('--imap-folder parameter required')
     if not options.download_folder:
         parser.error('--output parameter required')
     if options.delete_copy_folder and not options.delete:
@@ -64,45 +86,74 @@ if __name__ == '__main__':
     logging.info("Logging in to: '%s' as '%s'", options.host, options.username)
     mail = Imbox(options.host, username=options.username, password=options.password)
 
-    logging.info("Listing messages in folder: %s", '"' + options.imap_folder + '"')
-    messages = mail.messages(folder=options.imap_folder)
+    folders = []
 
-    for (uid, message) in messages:
-        subject = ''
-        if hasattr(message, 'subject'):
-            subject = message.subject
+    if options.imap_folder:
+        folders = [options.imap_folder]
+    else:
+        status, folders = mail.folders()
+        folders = [folder.decode().split(" \"/\" ")[1] for folder in folders]
 
-        logging.info("Processing message '%s' subject '%s'", uid, subject)
+    for folder in folders:
+        filter_options = {}
+        filter_options['folder'] = folder
+        if options.date_after and options.date_before and options.date_after.date() == options.date_before.date():
+            filter_options['date__on'] = options.date_after.date()
+        elif options.date_after:
+            filter_options['date__gt'] = options.date_after.date()
+        elif options.date_before:
+            filter_options['date__lt'] = options.date_before.date()
 
-        for idx, attachment in enumerate(message.attachments):
-            try:
-                parsed_message_date = datetime.datetime.strptime(message.date, '%a, %d %b %Y %H:%M:%S %z')
-                filename_template = Template(options.filename_template)
-                download_filename = filename_template.render(attachment_name=attachment.get('filename'),
-                                                             attachment_idx=idx,
-                                                             subject=subject,
-                                                             message_id=message.message_id,
-                                                             date=parsed_message_date)
+        logging.info("Listing messages matching the following criteria: %s",
+                     ", ".join([k + "=" + str(v) for k, v in filter_options.items()]))
+        messages = mail.messages(**filter_options)
 
-                download_path = os.path.join(options.download_folder, download_filename)
-                os.makedirs(os.path.dirname(os.path.abspath(download_path)), exist_ok=True)
-                logging.info("Downloading attachment '%s' to path %s", attachment.get('filename'), download_path)
+        for (uid, message) in messages:
+            parsed_message_date = datetime.datetime.strptime(message.date, '%a, %d %b %Y %H:%M:%S %z')
 
-                if os.path.isfile(download_path):
-                    logging.warning("Overwriting file: '%s'", download_path)
+            subject = ''
+            if hasattr(message, 'subject'):
+                subject = message.subject
 
-                with open(download_path, "wb") as fp:
-                    fp.write(attachment.get('content').read())
+            if options.date_after and parsed_message_date < options.date_after:
+                logging.warning("Skipping message '%s' subject '%s' because it is before %s", uid, subject, options.date_after)
+                continue
 
-            except Exception as e:
-                logging.exception(e)
-                logging.error('Error saving file. Continuing...')
-            else:
-                if options.delete:
-                    if options.delete_copy_folder:
-                        mail.copy(uid, '"' + options.delete_copy_folder + '"')
+            if options.date_before and parsed_message_date >= options.date_before:
+                logging.warning("Skipping message '%s' subject '%s' because it is after %s", uid, subject, options.date_before)
+                continue
 
-                    mail.delete(uid)
+            logging.info("Processing message '%s' subject '%s'", uid, subject)
+
+            for idx, attachment in enumerate(message.attachments):
+                try:
+                    filename_template = Template(options.filename_template)
+                    download_filename = filename_template.render(attachment_name=attachment.get('filename'),
+                                                                 attachment_idx=idx,
+                                                                 subject=subject,
+                                                                 message_id=message.message_id,
+                                                                 date=parsed_message_date,
+                                                                 folder=folder)
+
+                    download_path = os.path.join(options.download_folder, download_filename)
+                    os.makedirs(os.path.dirname(os.path.abspath(download_path)), exist_ok=True)
+                    logging.info("Downloading attachment '%s' to path %s", attachment.get('filename'), download_path)
+
+                    if os.path.isfile(download_path):
+                        logging.warning("Overwriting file: '%s'", download_path)
+
+                    with open(download_path, "wb") as fp:
+                        fp.write(attachment.get('content').read())
+
+                except Exception as e:
+                    logging.exception(e)
+                    logging.error('Error saving file. Continuing...')
+                else:
+                    if options.delete:
+                        if options.delete_copy_folder:
+                            mail.copy(uid, '"' + options.delete_copy_folder + '"')
+
+                        mail.delete(uid)
 
     logging.info('Finished processing messages')
 

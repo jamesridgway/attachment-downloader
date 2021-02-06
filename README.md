@@ -30,6 +30,18 @@ Example:
     $ attachment-downloader --host imap.example.com --username mail@example.com --password pa55word \\
         --imap-folder invoices --output ~/Downloads
 
+### Messages from all folders
+If you wish to search through all messages regardless of folder, omit the `--imap-folder` argument.
+
+### Date Filtering
+Date filtering can be performed by specifying one or both of the date arguments:
+
+    --date-after="2021-02-06T13:00:00" --date-before="2021-02-06T13:25:00"
+
+Dates should be provided in ISO format, e.g: `2021-02-06T13:25:00` or `2021-02-06T13:25:00`.
+
+If a zone offset is not provided UTC will be assumed.
+
 ## Requirements
 This tool requires Python 3+
 
