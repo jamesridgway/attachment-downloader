@@ -1,2 +1,2 @@
-jinja2
-imbox
+imbox==0.9.8
+jinja2==2.11.3

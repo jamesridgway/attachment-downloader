@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import datetime
 import logging
 import os
 import sys
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     parser.add_option("--filename-template", dest="filename_template", help="Attachment filename (jinja2) template.",
                       default="{{ attachment_name }}")
     parser.add_option("--output", dest="download_folder", help="Output directory for attachment download")
-    parser.add_option("--delete", dest="delete", action="store_true", help="Delete downloaed E-Mails from Mailbox")
+    parser.add_option("--delete", dest="delete", action="store_true", help="Delete downloaded emails from Mailbox")
     parser.add_option("--delete-copy-folder", dest="delete_copy_folder",
                       help="IMAP folder to copy emails to before deleting them")
 
@@ -68,8 +68,6 @@ if __name__ == '__main__':
     messages = mail.messages(folder=options.imap_folder)
 
     for (uid, message) in messages:
-        mail.mark_seen(uid)
-
         subject = ''
         if hasattr(message, 'subject'):
             subject = message.subject
@@ -78,12 +76,13 @@ if __name__ == '__main__':
 
         for idx, attachment in enumerate(message.attachments):
             try:
+                parsed_message_date = datetime.datetime.strptime(message.date, '%a, %d %b %Y %H:%M:%S %z')
                 filename_template = Template(options.filename_template)
                 download_filename = filename_template.render(attachment_name=attachment.get('filename'),
                                                              attachment_idx=idx,
                                                              subject=subject,
                                                              message_id=message.message_id,
-                                                             local_date=message.date)
+                                                             date=parsed_message_date)
 
                 download_path = os.path.join(options.download_folder, download_filename)
                 os.makedirs(os.path.dirname(os.path.abspath(download_path)), exist_ok=True)

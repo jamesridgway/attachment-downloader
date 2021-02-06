@@ -45,8 +45,12 @@ The following variables are supported:
 * `attachment_name`
 * `attachment_idx`
 * `subject`
-* `local_date`
+* `date`
 
 In the following example, downloads will be placed within the output folder grouped into a folder hierarchy of date, message ID, subject:
 
-    --filename-template="{{local_date}}/{{ message_id }}/{{ subject }}/{{ attachment_name }}"
+    --filename-template="{{date}}/{{ message_id }}/{{ subject }}/{{ attachment_name }}"
+
+The datetime of the message can also be formatted in the output filename, for example:
+
+    --filename-template "{{date.strftime('%Y-%m-%d')}} {{ attachment_name }}"
