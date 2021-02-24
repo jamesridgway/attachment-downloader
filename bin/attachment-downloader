@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import sys
+import dateutil.parser as dateparser
 from copy import copy
 from getpass import getpass
 from optparse import OptionParser, Option, OptionValueError
@@ -112,12 +113,16 @@ if __name__ == '__main__':
         messages = mail.messages(**filter_options)
 
         for (uid, message) in messages:
-            sanitised_date = message.date.split("(")[0].strip()
-            parsed_message_date = datetime.datetime.strptime(sanitised_date, '%a, %d %b %Y %H:%M:%S %z')
-
             subject = ''
             if hasattr(message, 'subject'):
                 subject = message.subject
+
+            try:
+                parsed_message_date = dateparser.parse(message.date)
+            except Exception as e:
+                logging.exception(e)
+                logging.error("Skipping message '%s' subject '%s' because date can not be parsed '%s'", uid, subject, message.date)
+                continue
 
             if options.date_after and parsed_message_date < options.date_after:
                 logging.warning("Skipping message '%s' subject '%s' because it is before %s", uid, subject, options.date_after)
