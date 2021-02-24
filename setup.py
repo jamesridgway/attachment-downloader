@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='attachment-downloader',
-    version='1.1.3',
+    version='1.1.4',
     description='Simple tool for downloading email attachments for all emails in a given folder using an IMAP client.',
     long_description=open('README.rst').read(),
     author='James Ridgway',
