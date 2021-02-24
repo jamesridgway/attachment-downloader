@@ -73,3 +73,6 @@ In the following example, downloads will be placed within the output folder grou
 The datetime of the message can also be formatted in the output filename, for example:
 
     --filename-template "{{date.strftime('%Y-%m-%d')}} {{ attachment_name }}"
+    
+## Reporting Issues and Contributing
+If you spot any issues or have a feature request please feel free to raise an issue, or even better, propose a pull request.
