@@ -88,7 +88,7 @@ if __name__ == '__main__':
     password = options.password if options.password else getpass('IMAP Password: ')
 
     logging.info("Logging in to: '%s' as '%s'", options.host, options.username)
-    mail = Imbox(options.host, username=options.username, password=options.password)
+    mail = Imbox(options.host, username=options.username, password=password)
 
     folders = []
 
