@@ -77,6 +77,9 @@ if __name__ == '__main__':
     parser.add_option("--delete", dest="delete", action="store_true", help="Delete downloaded emails from Mailbox")
     parser.add_option("--delete-copy-folder", dest="delete_copy_folder",
                       help="IMAP folder to copy emails to before deleting them")
+    parser.add_option("--port", dest="port", type=int, help="Specify imap server port (defaults to 993 for TLS and 143 otherwise")
+    parser.add_option("--unsecure", dest="unsecure", action="store_true", help="disable encrypted connection (not recommended)")
+    parser.add_option("--starttls", dest="starttls", action="store_true", help="enable STARTTLS (not recommended)")
 
     (options, args) = parser.parse_args()
 
@@ -88,14 +91,29 @@ if __name__ == '__main__':
         parser.error('--output parameter required')
     if options.delete_copy_folder and not options.delete:
         parser.error('--delete parameter required when using --delete-copy-folder')
+    if options.unsecure and options.starttls:
+        parser.error('--unsecure and --starttls are exclusive')
+
+    tls = False if options.unsecure else True
+    if options.starttls:
+        starttls = True
+        tls = False
+    else:
+        starttls = False
+
+
 
     filename_template = Template(options.filename_template)
 
     password = options.password if options.password else get_password()
-    
-    logging.info("Logging in to: '%s' as '%s'", options.host, options.username)
-    mail = Imbox(options.host, username=options.username, password=password)
 
+    logging.info("Logging in to: '%s' as '%s'", options.host, options.username)
+    mail = Imbox(options.host,
+                 username=options.username,
+                 password=password,
+                 port=options.port,
+                 ssl=tls,
+                 starttls=starttls)
     folders = []
 
     if options.imap_folder:
