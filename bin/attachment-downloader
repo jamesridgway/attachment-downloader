@@ -23,6 +23,12 @@ def valid_date(option, opt, value):
         raise OptionValueError( 'option %s: invalid date format: %r' % (opt, value))
 
 
+def get_password():
+    if sys.stdin.isatty():
+        return getpass('IMAP Password: ')
+    else:
+        return sys.stdin.read().strip()
+
 if __name__ == '__main__':
 
     class InfoFilter(logging.Filter):
@@ -85,8 +91,8 @@ if __name__ == '__main__':
 
     filename_template = Template(options.filename_template)
 
-    password = options.password if options.password else getpass('IMAP Password: ')
-
+    password = options.password if options.password else get_password()
+    
     logging.info("Logging in to: '%s' as '%s'", options.host, options.username)
     mail = Imbox(options.host, username=options.username, password=password)
 
