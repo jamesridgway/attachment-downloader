@@ -10,5 +10,5 @@ setup(
     license='MIT',
     packages=['attachment_downloader'],
     scripts=['bin/attachment-downloader'],
-    install_requires=["jinja2", "imbox"]
+    install_requires=["jinja2", "imbox", "python-dateutil"]
 )
