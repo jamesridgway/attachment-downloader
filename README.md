@@ -31,6 +31,10 @@ Usage:
       --delete              Delete downloaded emails from Mailbox
       --delete-copy-folder=DELETE_COPY_FOLDER
                             IMAP folder to copy emails to before deleting them
+      --port=PORT           Specify imap server port (defaults to 993 for TLS and
+                            143 otherwise
+      --unsecure            disable encrypted connection (not recommended)
+      --starttls            enable STARTTLS (not recommended)
 
 Example:
 
