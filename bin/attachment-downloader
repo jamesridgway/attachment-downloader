@@ -127,10 +127,11 @@ if __name__ == '__main__':
         filter_options['folder'] = folder
         if options.date_after and options.date_before and options.date_after.date() == options.date_before.date():
             filter_options['date__on'] = options.date_after.date()
-        elif options.date_after:
-            filter_options['date__gt'] = options.date_after.date()
-        elif options.date_before:
-            filter_options['date__lt'] = options.date_before.date()
+        else:
+            if options.date_after:
+                filter_options['date__gt'] = options.date_after.date()
+            if options.date_before:
+                filter_options['date__lt'] = options.date_before.date()
 
         logging.info("Listing messages matching the following criteria: %s",
                      ", ".join([k + "=" + str(v) for k, v in filter_options.items()]))
