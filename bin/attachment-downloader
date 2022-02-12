@@ -20,7 +20,7 @@ def valid_date(option, opt, value):
             parsed_value = parsed_value.replace(tzinfo=datetime.timezone.utc)
         return parsed_value
     except ValueError:
-        raise OptionValueError( 'option %s: invalid date format: %r' % (opt, value))
+        raise OptionValueError('option %s: invalid date format: %r' % (opt, value))
 
 
 def get_password():
@@ -28,6 +28,7 @@ def get_password():
         return getpass('IMAP Password: ')
     else:
         return sys.stdin.read().strip()
+
 
 if __name__ == '__main__':
 
@@ -60,6 +61,7 @@ if __name__ == '__main__':
         TYPE_CHECKER = copy(Option.TYPE_CHECKER)
         TYPE_CHECKER['date'] = valid_date
 
+
     parser = OptionParser(option_class=AttachmentDownloaderOption)
     parser.add_option("--host", dest="host", help="IMAP Host")
     parser.add_option("--username", dest="username", help="IMAP Username")
@@ -77,8 +79,10 @@ if __name__ == '__main__':
     parser.add_option("--delete", dest="delete", action="store_true", help="Delete downloaded emails from Mailbox")
     parser.add_option("--delete-copy-folder", dest="delete_copy_folder",
                       help="IMAP folder to copy emails to before deleting them")
-    parser.add_option("--port", dest="port", type=int, help="Specify imap server port (defaults to 993 for TLS and 143 otherwise")
-    parser.add_option("--unsecure", dest="unsecure", action="store_true", help="disable encrypted connection (not recommended)")
+    parser.add_option("--port", dest="port", type=int,
+                      help="Specify imap server port (defaults to 993 for TLS and 143 otherwise")
+    parser.add_option("--unsecure", dest="unsecure", action="store_true",
+                      help="disable encrypted connection (not recommended)")
     parser.add_option("--starttls", dest="starttls", action="store_true", help="enable STARTTLS (not recommended)")
 
     (options, args) = parser.parse_args()
@@ -100,8 +104,6 @@ if __name__ == '__main__':
         tls = False
     else:
         starttls = False
-
-
 
     filename_template = Template(options.filename_template)
 
@@ -146,19 +148,27 @@ if __name__ == '__main__':
                 parsed_message_date = dateparser.parse(message.date)
             except Exception as e:
                 logging.exception(e)
-                logging.error("Skipping message '%s' subject '%s' because date can not be parsed '%s'", uid, subject, message.date)
+                if hasattr(message, 'date'):
+                    logging.error("Skipping message '%s' subject '%s' because date can not be parsed '%s'", uid,
+                                  subject, message.date)
+                else:
+                    logging.error("Skipping message '%s' subject '%s' because message does not have a date attribute",
+                                  uid, subject)
                 continue
 
             if options.date_after and parsed_message_date < options.date_after:
-                logging.warning("Skipping message '%s' subject '%s' because it is before %s", uid, subject, options.date_after)
+                logging.warning("Skipping message '%s' subject '%s' because it is before %s", uid, subject,
+                                options.date_after)
                 continue
 
             if options.date_before and parsed_message_date >= options.date_before:
-                logging.warning("Skipping message '%s' subject '%s' because it is after %s", uid, subject, options.date_before)
+                logging.warning("Skipping message '%s' subject '%s' because it is after %s", uid, subject,
+                                options.date_before)
                 continue
 
             if options.subject_regex and not re.match(options.subject_regex, subject):
-                logging.warning("Skipping message '%s' subject '%s' because it does not match %s", uid, subject, options.subject_regex)
+                logging.warning("Skipping message '%s' subject '%s' because it does not match %s", uid, subject,
+                                options.subject_regex)
                 continue
 
             logging.info("Processing message '%s' subject '%s'", uid, subject)
