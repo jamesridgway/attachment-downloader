@@ -8,16 +8,19 @@ VERSION_FILENAME = os.path.abspath(os.path.join(os.path.dirname(__file__), 'vers
 class Version:
     @staticmethod
     def generate():
-        process = subprocess.Popen(["git", "describe", "--always", "--tags"], stdout=subprocess.PIPE, stderr=None)
-        last_tag = process.communicate()[0].decode('ascii').strip()
-        version = last_tag.split('-g', maxsplit=1)[0].replace('-', '.') if '-g' in last_tag else last_tag
-        with open(VERSION_FILENAME, 'w') as file:
-            file.write(f'ATTACHMENT_DOWNLOADER_VERSION = "{version}"\n')
-        return version
+        with subprocess.Popen(["git", "describe", "--always", "--tags"],
+                              stdout=subprocess.PIPE,
+                              stderr=None) as process:
+            last_tag = process.communicate()[0].decode('ascii').strip()
+            version = last_tag.split('-g', maxsplit=1)[0].replace('-', '.') if '-g' in last_tag else last_tag
+            with open(VERSION_FILENAME, 'w',encoding='utf-8') as file:
+                file.write(f'ATTACHMENT_DOWNLOADER_VERSION = "{version}"\n')
+            return version
 
     @staticmethod
     def get(retry=True):
         try:
+            # pylint: disable=C0415
             from attachment_downloader.version import ATTACHMENT_DOWNLOADER_VERSION
             return ATTACHMENT_DOWNLOADER_VERSION
         except ModuleNotFoundError:

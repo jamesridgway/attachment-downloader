@@ -1,17 +1,16 @@
 import datetime
 import sys
 from getpass import getpass
-from optparse import OptionValueError
 
 
-def valid_date(option, opt, value):
+def valid_date(_, opt, value):
     try:
         parsed_value = datetime.datetime.fromisoformat(value)
         if not parsed_value.tzinfo:
             parsed_value = parsed_value.replace(tzinfo=datetime.timezone.utc)
         return parsed_value
-    except ValueError:
-        raise OptionValueError(f'option {opt}: invalid date format: {value}')
+    except ValueError as ex:
+        raise ValueError(f'option {opt}: invalid date format: {value}') from ex
 
 
 def get_password():
