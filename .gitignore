@@ -1,8 +1,10 @@
-.idea/
 __pycache__/
-dist/
-*.pyc
+.coverage
 .idea/
+.pytest_cache/
 *.egg-info
-venv/
+*.pyc
 attachment_downloader/version.py
+dist/
+htmlcov/
+venv/

@@ -3,8 +3,8 @@ import sys
 
 
 class InfoFilter(logging.Filter):
-    def filter(self, rec):
-        return rec.levelno in (logging.DEBUG, logging.INFO)
+    def filter(self, record):
+        return record.levelno in (logging.DEBUG, logging.INFO)
 
 class Logger:
     @staticmethod
