@@ -1,4 +1,5 @@
 import os
+import platform
 
 VERSION_FILENAME = os.path.abspath(os.path.join(os.path.dirname(__file__), 'version.py'))
 import subprocess
@@ -29,3 +30,8 @@ class Version:
                 Version.generate()
                 return Version.get(False)
             return 'unknown'
+
+    @staticmethod
+    def get_env_info():
+        os = f"Release: {platform.release()}, Platform: {platform.platform()}"
+        return f"(Python: {platform.python_version()}), OS: ({os})"

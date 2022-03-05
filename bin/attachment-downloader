@@ -16,7 +16,7 @@ from attachment_downloader.version_info import Version
 
 if __name__ == '__main__':
     Logger.setup()
-    logging.info(f'Attachment Downloader - Version: {Version.get()}')
+    logging.info(f'Attachment Downloader - Version: {Version.get()} {Version.get_env_info()}')
 
     if sys.version_info[0] < 3:
         logging.error("This application requires Python 3+, you are running version: %s", sys.version)
