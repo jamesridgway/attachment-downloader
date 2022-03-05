@@ -1,5 +1,5 @@
 # Attachment Downloader
-[![Build Status](https://travis-ci.org/jamesridgway/attachment-downloader.svg?branch=master)](https://travis-ci.org/jamesridgway/attachment-downloader)
+[![CI](https://github.com/jamesridgway/attachment-downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/jamesridgway/attachment-downloader/actions/workflows/ci.yml)
 
 Simple tool for downloading email attachments for all emails in a given folder using an IMAP client.
 
