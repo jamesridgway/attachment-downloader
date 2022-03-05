@@ -5,3 +5,4 @@ dist/
 .idea/
 *.egg-info
 venv/
+attachment_downloader/version.py

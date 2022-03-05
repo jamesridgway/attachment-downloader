@@ -12,9 +12,11 @@ from jinja2 import Template, UndefinedError
 
 from attachment_downloader.cli import valid_date, get_password
 from attachment_downloader.logging import Logger
+from attachment_downloader.version_info import Version
 
 if __name__ == '__main__':
     Logger.setup()
+    logging.info(f'Attachment Downloader - Version: {Version.get()}')
 
     if sys.version_info[0] < 3:
         logging.error("This application requires Python 3+, you are running version: %s", sys.version)
