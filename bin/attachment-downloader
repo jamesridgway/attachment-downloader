@@ -11,6 +11,7 @@ from imbox import Imbox
 from jinja2 import Template, UndefinedError
 
 from attachment_downloader.cli import valid_date, get_password
+from attachment_downloader.encoding import QuoPriEncoding
 from attachment_downloader.logging import Logger
 from attachment_downloader.version_info import Version
 
@@ -108,7 +109,7 @@ if __name__ == '__main__':
         for (uid, message) in messages:
             subject = ''
             if hasattr(message, 'subject'):
-                subject = message.subject
+                subject = QuoPriEncoding.decode(message.subject)
 
             try:
                 parsed_message_date = dateparser.parse(message.date)
@@ -141,7 +142,8 @@ if __name__ == '__main__':
 
             for idx, attachment in enumerate(message.attachments):
                 try:
-                    download_filename = filename_template.render(attachment_name=attachment.get('filename'),
+                    attachment_filename = QuoPriEncoding.decode(attachment.get('filename'))
+                    download_filename = filename_template.render(attachment_name=attachment_filename,
                                                                  attachment_idx=idx,
                                                                  subject=subject,
                                                                  message_id=message.message_id,
@@ -150,7 +152,7 @@ if __name__ == '__main__':
 
                     download_path = os.path.join(options.download_folder, download_filename)
                     os.makedirs(os.path.dirname(os.path.abspath(download_path)), exist_ok=True)
-                    logging.info("Downloading attachment '%s' to path %s", attachment.get('filename'), download_path)
+                    logging.info("Downloading attachment '%s' to path %s", attachment_filename, download_path)
 
                     if os.path.isfile(download_path):
                         logging.warning("Overwriting file: '%s'", download_path)

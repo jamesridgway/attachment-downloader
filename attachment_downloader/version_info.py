@@ -1,6 +1,7 @@
 import os
 import platform
 import subprocess
+import sys
 
 VERSION_FILENAME = os.path.abspath(os.path.join(os.path.dirname(__file__), 'version.py'))
 
@@ -37,4 +38,4 @@ class Version:
     @staticmethod
     def get_env_info():
         os_info = f"Release: {platform.release()}, Platform: {platform.platform()}"
-        return f"(Python: {platform.python_version()}), OS: ({os_info})"
+        return f"(Python: {platform.python_version()}), OS: ({os_info}). Default Encoding: {sys.getdefaultencoding()}"
