@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  dovecot:
+    image: marooou/postfix-roundcube
+    environment:
+      - ADMIN_USERNAME=root
+      - ADMIN_PASSWD=password
+      - DOMAIN_NAME=example.com
+      - USERS=user1:pass1,user2:pass2
+    ports:
+    - 25:25
+    - 80:80
+    - 110:110
+    - 143:143
+    - 465:465
+    - 993:993
+    - 995:995
