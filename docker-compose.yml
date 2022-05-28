@@ -4,9 +4,9 @@ services:
     image: marooou/postfix-roundcube
     environment:
       - ADMIN_USERNAME=root
-      - ADMIN_PASSWD=password
+      - ADMIN_PASSWD=L3tm31n
       - DOMAIN_NAME=example.com
-      - USERS=user1:pass1,user2:pass2
+      - USERS=user1:Pass11,user2:Pass22
     ports:
     - 25:25
     - 80:80
