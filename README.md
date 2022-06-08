@@ -80,3 +80,19 @@ The datetime of the message can also be formatted in the output filename, for ex
     
 ## Reporting Issues and Contributing
 If you spot any issues or have a feature request please feel free to raise an issue, or even better, propose a pull request.
+
+## Testing
+For local testing of the tool, a docker-compose stack is included which provides a Postfix, Dovecot, PostfixAdmin and Roundcube setup.
+
+Docker compose can be run using
+
+    docker-compose up
+
+The login for [PostfixAdmin](http://localhost/postfixadmin) is `root` / `L3tm31n`
+
+The following mailboxes will also be created which can be accessed via [roundcube](http://localhost/roundcubemail):
+
+| Mailbox             | Password |
+| ------------------- | -------- |
+| `user1@example.com` | `Pass11` |
+| `user2@example.com` | `Pass22` |
