@@ -2,6 +2,7 @@
 import logging
 import os
 import re
+import ssl
 import sys
 from copy import copy
 from optparse import OptionParser, Option
@@ -14,6 +15,88 @@ from attachment_downloader.cli import valid_date, get_password
 from attachment_downloader.encoding import QuoPriEncoding
 from attachment_downloader.logging import Logger
 from attachment_downloader.version_info import Version
+
+
+def build_filter_options():
+    filter_options = {'folder': folder}
+    if options.date_after and options.date_before and options.date_after.date() == options.date_before.date():
+        filter_options['date__on'] = options.date_after.date()
+    else:
+        if options.date_after:
+            filter_options['date__gt'] = options.date_after.date()
+        if options.date_before:
+            filter_options['date__lt'] = options.date_before.date()
+    logging.info("Listing messages matching the following criteria: %s",
+                 ", ".join([k + "=" + str(v) for k, v in filter_options.items()]))
+    return filter_options
+
+def process_message(filename_template, options, message):
+    subject = ''
+    if hasattr(message, 'subject'):
+        subject = QuoPriEncoding.decode(message.subject)
+
+    try:
+        parsed_message_date = dateparser.parse(message.date)
+    except Exception as e:
+        logging.exception(e)
+        if hasattr(message, 'date'):
+            logging.error("Skipping message '%s' subject '%s' because date can not be parsed '%s'", uid,
+                          subject, message.date)
+        else:
+            logging.error("Skipping message '%s' subject '%s' because message does not have a date attribute",
+                          uid, subject)
+        return
+
+    if options.date_after and parsed_message_date < options.date_after:
+        logging.warning("Skipping message '%s' subject '%s' because it is before %s", uid, subject,
+                        options.date_after)
+        return
+
+    if options.date_before and parsed_message_date >= options.date_before:
+        logging.warning("Skipping message '%s' subject '%s' because it is after %s", uid, subject,
+                        options.date_before)
+        return
+
+    if options.subject_regex and not re.match(options.subject_regex, subject):
+        logging.warning("Skipping message '%s' subject '%s' because it does not match %s", uid, subject,
+                        options.subject_regex)
+        return
+
+    logging.info("Processing message '%s' subject '%s'", uid, subject)
+
+    for idx, attachment in enumerate(message.attachments):
+        try:
+            attachment_filename = QuoPriEncoding.decode(attachment.get('filename'))
+            download_filename = filename_template.render(attachment_name=attachment_filename,
+                                                         attachment_idx=idx,
+                                                         subject=subject,
+                                                         message_id=message.message_id,
+                                                         date=parsed_message_date,
+                                                         folder=folder)
+
+            download_path = os.path.join(options.download_folder, download_filename)
+            os.makedirs(os.path.dirname(os.path.abspath(download_path)), exist_ok=True)
+            logging.info("Downloading attachment '%s' to path %s", attachment_filename, download_path)
+
+            if os.path.isfile(download_path):
+                logging.warning("Overwriting file: '%s'", download_path)
+
+            with open(download_path, "wb") as fp:
+                fp.write(attachment.get('content').read())
+        except UndefinedError as e:
+            logging.error('Filename template contains an undefined variable: %s', str(e))
+            logging.info('Logging out of: %s', options.host)
+            mail.logout()
+            exit(-1)
+        except Exception as e:
+            logging.exception(e)
+            logging.error('Error saving file. Continuing...')
+        else:
+            if options.delete:
+                if options.delete_copy_folder:
+                    mail.copy(uid, '"' + options.delete_copy_folder + '"')
+
+                mail.delete(uid)
 
 if __name__ == '__main__':
     Logger.setup()
@@ -83,7 +166,11 @@ if __name__ == '__main__':
                  password=password,
                  port=options.port,
                  ssl=tls,
+                 ssl_context=ssl.create_default_context(),
                  starttls=starttls)
+
+    logging.info("Logged in to: '%s' as '%s'", options.host, options.username)
+
     folders = []
 
     if options.imap_folder:
@@ -91,88 +178,20 @@ if __name__ == '__main__':
     else:
         status, folders = mail.folders()
         folders = [folder.decode().split(" \"/\" ")[1] for folder in folders]
+        folders = [f for f in folders if not f == '"[Gmail]"']
 
+    logging.info("Folders: %s", folders)
     for folder in folders:
-        filter_options = {'folder': folder}
-        if options.date_after and options.date_before and options.date_after.date() == options.date_before.date():
-            filter_options['date__on'] = options.date_after.date()
-        else:
-            if options.date_after:
-                filter_options['date__gt'] = options.date_after.date()
-            if options.date_before:
-                filter_options['date__lt'] = options.date_before.date()
+        filter_options = build_filter_options()
 
-        logging.info("Listing messages matching the following criteria: %s",
-                     ", ".join([k + "=" + str(v) for k, v in filter_options.items()]))
-        messages = mail.messages(**filter_options)
+        try:
+            messages = mail.messages(**filter_options)
 
-        for (uid, message) in messages:
-            subject = ''
-            if hasattr(message, 'subject'):
-                subject = QuoPriEncoding.decode(message.subject)
-
-            try:
-                parsed_message_date = dateparser.parse(message.date)
-            except Exception as e:
-                logging.exception(e)
-                if hasattr(message, 'date'):
-                    logging.error("Skipping message '%s' subject '%s' because date can not be parsed '%s'", uid,
-                                  subject, message.date)
-                else:
-                    logging.error("Skipping message '%s' subject '%s' because message does not have a date attribute",
-                                  uid, subject)
-                continue
-
-            if options.date_after and parsed_message_date < options.date_after:
-                logging.warning("Skipping message '%s' subject '%s' because it is before %s", uid, subject,
-                                options.date_after)
-                continue
-
-            if options.date_before and parsed_message_date >= options.date_before:
-                logging.warning("Skipping message '%s' subject '%s' because it is after %s", uid, subject,
-                                options.date_before)
-                continue
-
-            if options.subject_regex and not re.match(options.subject_regex, subject):
-                logging.warning("Skipping message '%s' subject '%s' because it does not match %s", uid, subject,
-                                options.subject_regex)
-                continue
-
-            logging.info("Processing message '%s' subject '%s'", uid, subject)
-
-            for idx, attachment in enumerate(message.attachments):
-                try:
-                    attachment_filename = QuoPriEncoding.decode(attachment.get('filename'))
-                    download_filename = filename_template.render(attachment_name=attachment_filename,
-                                                                 attachment_idx=idx,
-                                                                 subject=subject,
-                                                                 message_id=message.message_id,
-                                                                 date=parsed_message_date,
-                                                                 folder=folder)
-
-                    download_path = os.path.join(options.download_folder, download_filename)
-                    os.makedirs(os.path.dirname(os.path.abspath(download_path)), exist_ok=True)
-                    logging.info("Downloading attachment '%s' to path %s", attachment_filename, download_path)
-
-                    if os.path.isfile(download_path):
-                        logging.warning("Overwriting file: '%s'", download_path)
-
-                    with open(download_path, "wb") as fp:
-                        fp.write(attachment.get('content').read())
-                except UndefinedError as e:
-                    logging.error('Filename template contains an undefined variable: %s', str(e))
-                    logging.info('Logging out of: %s', options.host)
-                    mail.logout()
-                    exit(-1)
-                except Exception as e:
-                    logging.exception(e)
-                    logging.error('Error saving file. Continuing...')
-                else:
-                    if options.delete:
-                        if options.delete_copy_folder:
-                            mail.copy(uid, '"' + options.delete_copy_folder + '"')
-
-                        mail.delete(uid)
+            for (uid, message) in messages:
+                process_message(filename_template, options, message)
+        except Exception as e:
+            logging.error("Failed to process messages for folder '%s'", folder)
+            logging.exception(e)
 
     logging.info('Finished processing messages')
 
