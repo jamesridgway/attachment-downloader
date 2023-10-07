@@ -99,13 +99,9 @@ def process_message(filename_template, options, message):
                 mail.delete(uid)
 
 if __name__ == '__main__':
-    Logger.setup()
-    logging.info(f'Attachment Downloader - Version: {Version.get()} {Version.get_env_info()}')
-
     if sys.version_info[0] < 3:
-        logging.error("This application requires Python 3+, you are running version: %s", sys.version)
+        print("This application requires Python 3+, you are running version: " + sys.version)
         exit(1)
-
 
     class AttachmentDownloaderOption(Option):
         TYPES = Option.TYPES + ('date',)
@@ -135,8 +131,13 @@ if __name__ == '__main__':
     parser.add_option("--unsecure", dest="unsecure", action="store_true",
                       help="disable encrypted connection (not recommended)")
     parser.add_option("--starttls", dest="starttls", action="store_true", help="enable STARTTLS (not recommended)")
+    parser.add_option("--log-level", dest="loglevel", default="INFO",
+                      help="Set the log level to DEBUG, INFO, WARNING, ERROR, or CRITICAL (default is INFO)")
 
     (options, args) = parser.parse_args()
+
+    Logger.setup(options.loglevel)
+    logging.info(f'Attachment Downloader - Version: {Version.get()} {Version.get_env_info()}')
 
     if not options.host:
         parser.error('--host parameter required')

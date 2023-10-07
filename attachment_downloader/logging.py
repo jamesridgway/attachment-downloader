@@ -2,16 +2,11 @@ import logging
 import sys
 
 
-class InfoFilter(logging.Filter):
-    def filter(self, record):
-        return record.levelno in (logging.DEBUG, logging.INFO)
-
 class Logger:
     @staticmethod
-    def setup():
+    def setup(level):
         std_out_stream_handler = logging.StreamHandler(sys.stdout)
-        std_out_stream_handler.setLevel(logging.DEBUG)
-        std_out_stream_handler.addFilter(InfoFilter())
+        std_out_stream_handler.setLevel(logging.getLevelName(level))
         std_out_stream_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 
         std_err_stream_handler = logging.StreamHandler(sys.stderr)
