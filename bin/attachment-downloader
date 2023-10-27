@@ -32,13 +32,9 @@ def build_filter_options():
 
 def process_message(filename_template, options, message):
     subject = ''
-    sender = ''
 
     if hasattr(message, 'subject'):
         subject = QuoPriEncoding.decode(message.subject)
-    if hasattr(message, 'from'):
-        sender = message.sent_from
-        sender = sender.replace("@", "_")
 
     try:
         parsed_message_date = dateparser.parse(message.date)
@@ -92,7 +88,6 @@ def process_message(filename_template, options, message):
             download_filename = filename_template.render(attachment_name=attachment_filename,
                                                          attachment_idx=idx,
                                                          subject=subject,
-                                                         sender=sender
                                                          message_id=message.message_id,
                                                          date=parsed_message_date,
                                                          folder=folder)
