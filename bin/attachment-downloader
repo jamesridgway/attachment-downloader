@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 import logging
 import os
 import re
@@ -56,9 +56,9 @@ def process_message(filename_template, options, message):
         logging.warning("Skipping message '%s' subject '%s' because it is after %s", uid, subject,
                         options.date_before)
         return
-    if options.subject_regex_match_anywhere and options.subject_regex_match_anywhere = True
-        if options.subject_regex_ignore_case and options.subject_regex_ignore_case = True
-            if options.subject_regex and not re.search(options.subject_regex, subject, flags=re.IGNORECASE):
+    if options.subject_regex_match_anywhere and options.subject_regex_match_anywhere is True:
+        if options.subject_regex_ignore_case and options.subject_regex_ignore_case is True:
+            if options.subject_regex and not re.search(options.subject_regex, subject, re.IGNORECASE):
                 logging.warning("Skipping message '%s' subject '%s' because %s (case-insensitive) was not found anywhere in the string", uid, subject,
                                 options.subject_regex)
                 return
@@ -69,7 +69,7 @@ def process_message(filename_template, options, message):
                 return
         return
     else: 
-        if options.subject_regex_ignore_case and options.subject_regex_ignore_case = true
+        if options.subject_regex_ignore_case and options.subject_regex_ignore_case is True:
             if options.subject_regex and not re.match(options.subject_regex, subject, flags=re.IGNORECASE):
                 logging.warning("Skipping message '%s' subject '%s' because it does not match %s (case-insensitive)", uid, subject,
                                 options.subject_regex)
