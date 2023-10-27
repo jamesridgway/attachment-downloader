@@ -135,8 +135,8 @@ if __name__ == '__main__':
     parser.add_option("--password", dest="password", help="IMAP Password")
     parser.add_option("--imap-folder", dest="imap_folder", help="IMAP Folder to extract attachments from")
     parser.add_option("--subject-regex", dest="subject_regex", help="Regex that the subject must match against")
-    parser.add_option("--subject-regex-ignore-case", dest="subject_regex_ignore_case, help="Ignore case in subject regex match. True/False")
-    parser.add_option("--subject-regex-match-anywhere", dest="subject_regex_match_anywhere, help="Search for regex match anywhere in subject. True/False")
+    parser.add_option("--subject-regex-ignore-case", dest="subject_regex_ignore_case", help="Ignore case in subject regex match. True/False")
+    parser.add_option("--subject-regex-match-anywhere", dest="subject_regex_match_anywhere", help="Search for regex match anywhere in subject. True/False")
     parser.add_option("--date-after", dest="date_after", type='date',
                       help='Select messages after this date')
     parser.add_option("--date-before", dest="date_before",
