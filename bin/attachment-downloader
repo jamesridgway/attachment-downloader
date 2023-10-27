@@ -67,8 +67,7 @@ def process_message(filename_template, options, message):
                 logging.warning("Skipping message '%s' subject '%s' because %s was not found anywhere in the string", uid, subject,
                                 options.subject_regex)
                 return
-        return
-    else: 
+    else:
         if options.subject_regex_ignore_case and options.subject_regex_ignore_case is True:
             if options.subject_regex and not re.match(options.subject_regex, subject, flags=re.IGNORECASE):
                 logging.warning("Skipping message '%s' subject '%s' because it does not match %s (case-insensitive)", uid, subject,
@@ -79,8 +78,6 @@ def process_message(filename_template, options, message):
                 logging.warning("Skipping message '%s' subject '%s' because it does not match %s", uid, subject,
                                 options.subject_regex)
                 return
-        return
-    return
 
     logging.info("Processing message '%s' subject '%s'", uid, subject)
 
@@ -135,8 +132,8 @@ if __name__ == '__main__':
     parser.add_option("--password", dest="password", help="IMAP Password")
     parser.add_option("--imap-folder", dest="imap_folder", help="IMAP Folder to extract attachments from")
     parser.add_option("--subject-regex", dest="subject_regex", help="Regex that the subject must match against")
-    parser.add_option("--subject-regex-ignore-case", dest="subject_regex_ignore_case", help="Ignore case in subject regex match. True/False")
-    parser.add_option("--subject-regex-match-anywhere", dest="subject_regex_match_anywhere", help="Search for regex match anywhere in subject. True/False")
+    parser.add_option("--subject-regex-ignore-case", dest="subject_regex_ignore_case", action="store_true", default=False,  help="Provide this option to ignore regex case in subject.")
+    parser.add_option("--subject-regex-match-anywhere", dest="subject_regex_match_anywhere", action="store_true", default=False, help="Provide this option to search anywhere in subject")
     parser.add_option("--date-after", dest="date_after", type='date',
                       help='Select messages after this date')
     parser.add_option("--date-before", dest="date_before",
