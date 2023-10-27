@@ -32,8 +32,13 @@ def build_filter_options():
 
 def process_message(filename_template, options, message):
     subject = ''
+    sender = ''
+
     if hasattr(message, 'subject'):
         subject = QuoPriEncoding.decode(message.subject)
+    if hasattr(message, 'from'):
+        sender = message.sent_from
+        sender = sender.replace("@", "_")
 
     try:
         parsed_message_date = dateparser.parse(message.date)
