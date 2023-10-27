@@ -32,7 +32,6 @@ def build_filter_options():
 
 def process_message(filename_template, options, message):
     subject = ''
-
     if hasattr(message, 'subject'):
         subject = QuoPriEncoding.decode(message.subject)
 
