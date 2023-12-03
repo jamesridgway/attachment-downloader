@@ -19,7 +19,11 @@ Usage:
       --imap-folder=IMAP_FOLDER
                             IMAP Folder to extract attachments from
       --subject-regex=SUBJECT_REGEX
-                            Regex that the subject must match against
+                            Regex that the subject must start with
+      --subject-regex-ignore-case
+                            Ignore case when matching subject
+      --subject-regex-match-anywhere
+                            Search entire subject for regex match
       --date-after=DATE_AFTER
                             Select messages after this date
       --date-before=DATE_BEFORE
