@@ -84,6 +84,13 @@ def process_message(filename_template, options, message):
     for idx, attachment in enumerate(message.attachments):
         try:
             attachment_filename = QuoPriEncoding.decode(attachment.get('filename'))
+
+            if options.filename_regex:
+                if not re.search(options.filename_regex, attachment_filename, flags=0):
+                    logging.warning("Skipping message '%s' subject '%s' send to '%s' because '%s' was not found in filename '%s'",
+                                    uid, subject, message.sent_to[0]['email'], options.subject_regex, attachment_filename)
+                    continue
+
             download_filename = filename_template.render(attachment_name=attachment_filename,
                                                          attachment_idx=idx,
                                                          subject=subject,
@@ -131,6 +138,7 @@ if __name__ == '__main__':
     parser.add_option("--username", dest="username", help="IMAP Username")
     parser.add_option("--password", dest="password", help="IMAP Password")
     parser.add_option("--imap-folder", dest="imap_folder", help="IMAP Folder to extract attachments from")
+    parser.add_option("--filename-regex", dest="filename_regex", help="Regex that the attachment filename must match against")
     parser.add_option("--sent-to-regex", dest="sent_to_regex", help="Regex that the sent_to must match against")
     parser.add_option("--subject-regex", dest="subject_regex", help="Regex that the subject must match against")
     parser.add_option("--subject-regex-ignore-case", dest="subject_regex_ignore_case", action="store_true", default=False,  help="Provide this option to ignore regex case in subject.")
