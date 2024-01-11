@@ -1,9 +1,10 @@
-#!/usr/bin/env python
+#!/home/willmann/Desktop/attachment-downloader/bin/python
 import logging
 import os
 import re
 import ssl
 import sys
+import time
 from copy import copy
 from optparse import OptionParser, Option
 
@@ -147,6 +148,12 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
+    for option,value in options.__dict__.items():
+        if not value:
+            value = os.getenv('AD_' + option.upper())
+            if value:
+                options.__dict__[option] = value
+
     Logger.setup(options.loglevel)
     logging.info(f'Attachment Downloader - Version: {Version.get()} {Version.get_env_info()}')
 
@@ -172,42 +179,49 @@ if __name__ == '__main__':
 
     password = options.password if options.password else get_password()
 
-    logging.info("Logging in to: '%s' as '%s'", options.host, options.username)
-    mail = Imbox(options.host,
-                 username=options.username,
-                 password=password,
-                 port=options.port,
-                 ssl=tls,
-                 ssl_context=ssl.create_default_context(),
-                 starttls=starttls)
+    while True:
 
-    logging.info("Logged in to: '%s' as '%s'", options.host, options.username)
+        logging.info("Logging in to: '%s' as '%s'", options.host, options.username)
+        mail = Imbox(options.host,
+                    username=options.username,
+                    password=password,
+                    port=options.port,
+                    ssl=tls,
+                    ssl_context=ssl.create_default_context(),
+                    starttls=starttls)
 
-    folders = []
+        logging.info("Logged in to: '%s' as '%s'", options.host, options.username)
 
-    if options.imap_folder:
-        folders = [options.imap_folder]
-    else:
-        status, folders = mail.folders()
-        folders = [folder.decode().split(" \"/\" ")[1] for folder in folders]
-        folders = [f for f in folders if not f == '"[Gmail]"']
+        folders = []
 
-    logging.info("Folders: %s", folders)
-    for folder in folders:
-        filter_options = build_filter_options()
+        if options.imap_folder:
+            folders = [options.imap_folder]
+        else:
+            status, folders = mail.folders()
+            folders = [folder.decode().split(" \"/\" ")[1] for folder in folders]
+            folders = [f for f in folders if not f == '"[Gmail]"']
 
-        try:
-            messages = mail.messages(**filter_options)
+        logging.info("Folders: %s", folders)
+        for folder in folders:
+            filter_options = build_filter_options()
 
-            for (uid, message) in messages:
-                process_message(filename_template, options, message)
-        except Exception as e:
-            logging.error("Failed to process messages for folder '%s'", folder)
-            logging.exception(e)
+            try:
+                messages = mail.messages(**filter_options)
 
-    logging.info('Finished processing messages')
+                for (uid, message) in messages:
+                    process_message(filename_template, options, message)
+            except Exception as e:
+                logging.error("Failed to process messages for folder '%s'", folder)
+                logging.exception(e)
 
-    logging.info('Logging out of: %s', options.host)
-    mail.logout()
+        logging.info('Finished processing messages')
+
+        logging.info('Logging out of: %s', options.host)
+        mail.logout()
+
+        if os.getenv("AD_INTERVAL") is None:
+            break
+        else:
+            time.sleep(int(os.getenv("AD_INTERVAL")))
 
     logging.info("Done")
