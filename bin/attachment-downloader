@@ -87,8 +87,8 @@ def process_message(filename_template, options, message):
 
             if options.filename_regex:
                 if not re.search(options.filename_regex, attachment_filename, flags=0):
-                    logging.warning("Skipping message '%s' subject '%s' send to '%s' because '%s' was not found in filename '%s'",
-                                    uid, subject, message.sent_to[0]['email'], options.subject_regex, attachment_filename)
+                    logging.warning("Skipping attachment '%s' because '%s' was not found in filename",
+                                    attachment_filename, options.filename_regex)
                     continue
 
             download_filename = filename_template.render(attachment_name=attachment_filename,
