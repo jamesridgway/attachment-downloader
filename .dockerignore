@@ -8,4 +8,4 @@ attachment_downloader/version.py
 dist/
 htmlcov/
 venv/
-.*
+.github
