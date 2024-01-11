@@ -1,4 +1,4 @@
-#!/home/willmann/Desktop/attachment-downloader/bin/python
+#!/usr/bin/env python
 import logging
 import os
 import re
@@ -33,6 +33,7 @@ def build_filter_options():
 
 def process_message(filename_template, options, message):
     subject = ''
+    sent_to = ''
     if hasattr(message, 'subject'):
         subject = QuoPriEncoding.decode(message.subject)
 
@@ -41,20 +42,20 @@ def process_message(filename_template, options, message):
     except Exception as e:
         logging.exception(e)
         if hasattr(message, 'date'):
-            logging.error("Skipping message '%s' subject '%s' because date can not be parsed '%s'", uid,
-                          subject, message.date)
+            logging.error("Skipping message '%s' subject '%s' send to '%s' because date can not be parsed '%s'", uid,
+                          subject, message.sent_to[0]['email'], message.date)
         else:
-            logging.error("Skipping message '%s' subject '%s' because message does not have a date attribute",
-                          uid, subject)
+            logging.error("Skipping message '%s' subject '%s' send to '%s' because message does not have a date attribute",
+                          uid, subject, message.sent_to[0]['email'])
         return
 
     if options.date_after and parsed_message_date < options.date_after:
-        logging.warning("Skipping message '%s' subject '%s' because it is before %s", uid, subject,
+        logging.warning("Skipping message '%s' subject '%s' send to '%s' because it is before %s", uid, subject, message.sent_to[0]['email'],
                         options.date_after)
         return
 
     if options.date_before and parsed_message_date >= options.date_before:
-        logging.warning("Skipping message '%s' subject '%s' because it is after %s", uid, subject,
+        logging.warning("Skipping message '%s' subject '%s' send to '%s' because it is after %s", uid, subject, message.sent_to[0]['email'],
                         options.date_before)
         return
 
@@ -63,16 +64,22 @@ def process_message(filename_template, options, message):
 
         if options.subject_regex_match_anywhere:
             if not re.search(options.subject_regex, subject, flags=regex_flags):
-                logging.warning("Skipping message '%s' subject '%s' because '%s' was not found in the string (case-%sensitive)",
-                                uid, subject, options.subject_regex, "in" if options.subject_regex_ignore_case else "s")
+                logging.warning("Skipping message '%s' subject '%s' send to '%s' because '%s' was not found in the string (case-%sensitive)",
+                                uid, subject, message.sent_to[0]['email'], options.subject_regex, "in" if options.subject_regex_ignore_case else "s")
                 return
         else:
             if not re.match(options.subject_regex, subject, flags=regex_flags):
-                logging.warning("Skipping message '%s' subject '%s' because it does not start with '%s' (case-%sensitive)",
-                                uid, subject, options.subject_regex, "in" if options.subject_regex_ignore_case else "s")
+                logging.warning("Skipping message '%s' subject '%s' send to '%s' because it does not start with '%s' (case-%sensitive)",
+                                uid, subject, message.sent_to[0]['email'], options.subject_regex, "in" if options.subject_regex_ignore_case else "s")
                 return
 
-    logging.info("Processing message '%s' subject '%s'", uid, subject)
+    if options.sent_to_regex:
+        if not re.search(options.sent_to_regex, message.sent_to[0]['email'], flags=0):
+            logging.warning("Skipping message '%s' subject '%s' send to '%s' because '%s' was not found in sent_to email",
+                            uid, subject, message.sent_to[0]['email'], options.subject_regex)
+            return
+
+    logging.info("Processing message '%s' subject '%s' send to '%s'", uid, subject, message.sent_to[0]['email'])
 
     for idx, attachment in enumerate(message.attachments):
         try:
@@ -124,6 +131,7 @@ if __name__ == '__main__':
     parser.add_option("--username", dest="username", help="IMAP Username")
     parser.add_option("--password", dest="password", help="IMAP Password")
     parser.add_option("--imap-folder", dest="imap_folder", help="IMAP Folder to extract attachments from")
+    parser.add_option("--sent-to-regex", dest="sent_to_regex", help="Regex that the sent_to must match against")
     parser.add_option("--subject-regex", dest="subject_regex", help="Regex that the subject must match against")
     parser.add_option("--subject-regex-ignore-case", dest="subject_regex_ignore_case", action="store_true", default=False,  help="Provide this option to ignore regex case in subject.")
     parser.add_option("--subject-regex-match-anywhere", dest="subject_regex_match_anywhere", action="store_true", default=False, help="Provide this option to search anywhere in subject")
