@@ -81,7 +81,8 @@ def process_message(filename_template, options, message):
                                                          subject=subject,
                                                          message_id=message.message_id,
                                                          date=parsed_message_date,
-                                                         folder=folder)
+                                                         folder=folder,
+                                                         from_email=message.sent_from[0]['email'])
 
             download_path = os.path.join(options.download_folder, download_filename)
             os.makedirs(os.path.dirname(os.path.abspath(download_path)), exist_ok=True)
