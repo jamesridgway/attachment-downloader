@@ -1,0 +1,11 @@
+__pycache__/
+.coverage
+.idea/
+.pytest_cache/
+*.egg-info
+*.pyc
+attachment_downloader/version.py
+dist/
+htmlcov/
+venv/
+.github
