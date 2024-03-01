@@ -73,6 +73,7 @@ The following variables are supported:
 * `attachment_idx`
 * `subject`
 * `date`
+* `from_email`
 
 In the following example, downloads will be placed within the output folder grouped into a folder hierarchy of date, message ID, subject:
 
