@@ -13,6 +13,17 @@ class Version:
     """
     Version information.
     """
+
+    @staticmethod
+    def commit_hash_short():
+        """
+        Returns the short commit hash.
+        """
+        with subprocess.Popen(["git", "rev-parse", "--short", "HEAD"],
+                              stdout=subprocess.PIPE,
+                              stderr=None) as process:
+            return process.communicate()[0].decode('ascii').strip()
+
     @staticmethod
     def generate():
         """
