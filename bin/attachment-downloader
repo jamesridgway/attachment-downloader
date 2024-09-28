@@ -196,49 +196,42 @@ if __name__ == '__main__':
 
     password = options.password if options.password else get_password()
 
-    while True:
+    logging.info("Logging in to: '%s' as '%s'", options.host, options.username)
+    mail = Imbox(options.host,
+                username=options.username,
+                password=password,
+                port=options.port,
+                ssl=tls,
+                ssl_context=ssl.create_default_context(),
+                starttls=starttls)
 
-        logging.info("Logging in to: '%s' as '%s'", options.host, options.username)
-        mail = Imbox(options.host,
-                    username=options.username,
-                    password=password,
-                    port=options.port,
-                    ssl=tls,
-                    ssl_context=ssl.create_default_context(),
-                    starttls=starttls)
+    logging.info("Logged in to: '%s' as '%s'", options.host, options.username)
 
-        logging.info("Logged in to: '%s' as '%s'", options.host, options.username)
+    folders = []
 
-        folders = []
+    if options.imap_folder:
+        folders = [options.imap_folder]
+    else:
+        status, folders = mail.folders()
+        folders = [folder.decode().split(" \"/\" ")[1] for folder in folders]
+        folders = [f for f in folders if not f == '"[Gmail]"']
 
-        if options.imap_folder:
-            folders = [options.imap_folder]
-        else:
-            status, folders = mail.folders()
-            folders = [folder.decode().split(" \"/\" ")[1] for folder in folders]
-            folders = [f for f in folders if not f == '"[Gmail]"']
+    logging.info("Folders: %s", folders)
+    for folder in folders:
+        filter_options = build_filter_options()
 
-        logging.info("Folders: %s", folders)
-        for folder in folders:
-            filter_options = build_filter_options()
+        try:
+            messages = mail.messages(**filter_options)
 
-            try:
-                messages = mail.messages(**filter_options)
+            for (uid, message) in messages:
+                process_message(filename_template, options, message)
+        except Exception as e:
+            logging.error("Failed to process messages for folder '%s'", folder)
+            logging.exception(e)
 
-                for (uid, message) in messages:
-                    process_message(filename_template, options, message)
-            except Exception as e:
-                logging.error("Failed to process messages for folder '%s'", folder)
-                logging.exception(e)
+    logging.info('Finished processing messages')
 
-        logging.info('Finished processing messages')
-
-        logging.info('Logging out of: %s', options.host)
-        mail.logout()
-
-        if os.getenv("AD_INTERVAL") is None:
-            break
-        else:
-            time.sleep(int(os.getenv("AD_INTERVAL")))
+    logging.info('Logging out of: %s', options.host)
+    mail.logout()
 
     logging.info("Done")
