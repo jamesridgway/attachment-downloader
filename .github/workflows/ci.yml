@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.10.15, 3.11.10, 3.12.6]
+        python-version: [3.12.6]
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
@@ -21,3 +21,9 @@ jobs:
       run: ./run-pylint.sh
     - name: Tests
       run: ./run-tests.sh
+    - name: Integration Tests
+      env:
+        MAILGUN_DOMAIN: ${{ secrets.MAILGUN_DOMAIN }}
+        MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
+        AD_INT_TEST_RECIPIENT: ${{ secrets.AD_INT_TEST_RECIPIENT }}
+      run: ./run-integration-tests.sh
