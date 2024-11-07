@@ -6,7 +6,7 @@ import ssl
 import sys
 import time
 from copy import copy
-from optparse import OptionParser, Option
+from argparse import ArgumentParser, Action
 
 import dateutil.parser as dateparser
 from imbox import Imbox
@@ -16,7 +16,6 @@ from attachment_downloader.cli import valid_date, get_password
 from attachment_downloader.encoding import QuoPriEncoding
 from attachment_downloader.logging import Logger
 from attachment_downloader.version_info import Version
-
 
 def build_filter_options():
     filter_options = {'folder': folder}
@@ -128,48 +127,38 @@ if __name__ == '__main__':
         print("This application requires Python 3+, you are running version: " + sys.version)
         exit(1)
 
-    class AttachmentDownloaderOption(Option):
-        TYPES = Option.TYPES + ('date',)
-        TYPE_CHECKER = copy(Option.TYPE_CHECKER)
-        TYPE_CHECKER['date'] = valid_date
+    class AttachmentDownloaderAction(Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            setattr(namespace, self.dest, valid_date(values))
 
+    parser = ArgumentParser()
+    parser.add_argument("--host", dest="host", help="IMAP Host")
+    parser.add_argument("--username", dest="username", help="IMAP Username")
+    parser.add_argument("--password", dest="password", help="IMAP Password")
+    parser.add_argument("--imap-folder", dest="imap_folder", help="IMAP Folder to extract attachments from")
+    parser.add_argument("--filename-regex", dest="filename_regex", help="Regex that the attachment filename must match against")
+    parser.add_argument("--sent-to-regex", dest="sent_to_regex", help="Regex that the sent_to must match against")
+    parser.add_argument("--subject-regex", dest="subject_regex", help="Regex that the subject must match against")
+    parser.add_argument("--subject-regex-ignore-case", dest="subject_regex_ignore_case", action="store_true", default=False, help="Provide this option to ignore regex case in subject.")
+    parser.add_argument("--subject-regex-match-anywhere", dest="subject_regex_match_anywhere", action="store_true", default=False, help="Provide this option to search anywhere in subject")
+    parser.add_argument("--date-after", dest="date_after", action=AttachmentDownloaderAction, help='Select messages after this date')
+    parser.add_argument("--date-before", dest="date_before", action=AttachmentDownloaderAction, help='Select messages before this date')
+    parser.add_argument("--filename-template", dest="filename_template", help="Attachment filename (jinja2) template.", default="{{ attachment_name }}")
+    parser.add_argument("--output", dest="download_folder", help="Output directory for attachment download")
+    parser.add_argument("--delete", dest="delete", action="store_true", help="Delete downloaded emails from Mailbox")
+    parser.add_argument("--delete-copy-folder", dest="delete_copy_folder", help="IMAP folder to copy emails to before deleting them")
+    parser.add_argument("--port", dest="port", type=int, help="Specify imap server port (defaults to 993 for TLS and 143 otherwise")
+    parser.add_argument("--unsecure", dest="unsecure", action="store_true", help="disable encrypted connection (not recommended)")
+    parser.add_argument("--starttls", dest="starttls", action="store_true", help="enable STARTTLS (not recommended)")
+    parser.add_argument("--log-level", dest="loglevel", default="INFO", help="Set the log level to DEBUG, INFO, WARNING, ERROR, or CRITICAL (default is INFO)")
 
-    parser = OptionParser(option_class=AttachmentDownloaderOption)
-    parser.add_option("--host", dest="host", help="IMAP Host")
-    parser.add_option("--username", dest="username", help="IMAP Username")
-    parser.add_option("--password", dest="password", help="IMAP Password")
-    parser.add_option("--imap-folder", dest="imap_folder", help="IMAP Folder to extract attachments from")
-    parser.add_option("--filename-regex", dest="filename_regex", help="Regex that the attachment filename must match against")
-    parser.add_option("--sent-to-regex", dest="sent_to_regex", help="Regex that the sent_to must match against")
-    parser.add_option("--subject-regex", dest="subject_regex", help="Regex that the subject must match against")
-    parser.add_option("--subject-regex-ignore-case", dest="subject_regex_ignore_case", action="store_true", default=False,  help="Provide this option to ignore regex case in subject.")
-    parser.add_option("--subject-regex-match-anywhere", dest="subject_regex_match_anywhere", action="store_true", default=False, help="Provide this option to search anywhere in subject")
-    parser.add_option("--date-after", dest="date_after", type='date',
-                      help='Select messages after this date')
-    parser.add_option("--date-before", dest="date_before",
-                      type='date',
-                      help='Select messages before this date')
-    parser.add_option("--filename-template", dest="filename_template", help="Attachment filename (jinja2) template.",
-                      default="{{ attachment_name }}")
-    parser.add_option("--output", dest="download_folder", help="Output directory for attachment download")
-    parser.add_option("--delete", dest="delete", action="store_true", help="Delete downloaded emails from Mailbox")
-    parser.add_option("--delete-copy-folder", dest="delete_copy_folder",
-                      help="IMAP folder to copy emails to before deleting them")
-    parser.add_option("--port", dest="port", type=int,
-                      help="Specify imap server port (defaults to 993 for TLS and 143 otherwise")
-    parser.add_option("--unsecure", dest="unsecure", action="store_true",
-                      help="disable encrypted connection (not recommended)")
-    parser.add_option("--starttls", dest="starttls", action="store_true", help="enable STARTTLS (not recommended)")
-    parser.add_option("--log-level", dest="loglevel", default="INFO",
-                      help="Set the log level to DEBUG, INFO, WARNING, ERROR, or CRITICAL (default is INFO)")
+    options = parser.parse_args()
 
-    (options, args) = parser.parse_args()
-
-    for option,value in options.__dict__.items():
+    for option, value in vars(options).items():
         if not value:
             value = os.getenv('AD_' + option.upper())
             if value:
-                options.__dict__[option] = value
+                setattr(options, option, value)
 
     Logger.setup(options.loglevel)
     logging.info(f'Attachment Downloader - Version: {Version.get()} {Version.get_env_info()}')
