@@ -74,9 +74,9 @@ def process_message(filename_template, options, message):
                 return
 
     if options.sent_to_regex:
-        if not re.search(options.sent_to_regex, message.sent_to[0]['email'], flags=0):
-            logging.warning("Skipping message '%s' subject '%s' send to '%s' because '%s' was not found in sent_to email",
-                            uid, subject, message.sent_to[0]['email'], options.subject_regex)
+        if not any(re.search(options.sent_to_regex, email['email'], flags=0) for email in message.sent_to):
+            logging.warning("Skipping message '%s' subject '%s' send to '%s' because '%s' was not found in any sent_to email",
+                            uid, subject, message.sent_to[0]['email'], options.sent_to_regex)
             return
 
     logging.info("Processing message '%s' subject '%s' send to '%s'", uid, subject, message.sent_to[0]['email'])
