@@ -33,9 +33,18 @@ def build_filter_options():
 
 def process_message(filename_template, options, message):
     subject = ''
-    sent_to = ''
     if hasattr(message, 'subject'):
         subject = QuoPriEncoding.decode(message.subject)
+
+    sent_to_list = getattr(message, 'sent_to', []) or []
+    sent_to_display = sent_to_list[0]['email'] if sent_to_list else '(no recipient)'
+    sent_from_list = getattr(message, 'sent_from', []) or []
+    sent_from_display = sent_from_list[0]['email'] if sent_from_list else '(unknown)'
+
+    if options.sent_to_regex and not sent_to_list:
+        logging.warning("Skipping message '%s' subject '%s' send to '%s' because sent_to is empty and --sent-to-regex is set",
+                        uid, subject, sent_to_display)
+        return
 
     try:
         parsed_message_date = dateparser.parse(message.date)
@@ -43,19 +52,19 @@ def process_message(filename_template, options, message):
         logging.exception(e)
         if hasattr(message, 'date'):
             logging.error("Skipping message '%s' subject '%s' send to '%s' because date can not be parsed '%s'", uid,
-                          subject, message.sent_to[0]['email'], message.date)
+                          subject, sent_to_display, message.date)
         else:
             logging.error("Skipping message '%s' subject '%s' send to '%s' because message does not have a date attribute",
-                          uid, subject, message.sent_to[0]['email'])
+                          uid, subject, sent_to_display)
         return
 
     if options.date_after and parsed_message_date < options.date_after:
-        logging.warning("Skipping message '%s' subject '%s' send to '%s' because it is before %s", uid, subject, message.sent_to[0]['email'],
+        logging.warning("Skipping message '%s' subject '%s' send to '%s' because it is before %s", uid, subject, sent_to_display,
                         options.date_after)
         return
 
     if options.date_before and parsed_message_date >= options.date_before:
-        logging.warning("Skipping message '%s' subject '%s' send to '%s' because it is after %s", uid, subject, message.sent_to[0]['email'],
+        logging.warning("Skipping message '%s' subject '%s' send to '%s' because it is after %s", uid, subject, sent_to_display,
                         options.date_before)
         return
 
@@ -65,21 +74,21 @@ def process_message(filename_template, options, message):
         if options.subject_regex_match_anywhere:
             if not re.search(options.subject_regex, subject, flags=regex_flags):
                 logging.warning("Skipping message '%s' subject '%s' send to '%s' because '%s' was not found in the string (case-%sensitive)",
-                                uid, subject, message.sent_to[0]['email'], options.subject_regex, "in" if options.subject_regex_ignore_case else "s")
+                                uid, subject, sent_to_display, options.subject_regex, "in" if options.subject_regex_ignore_case else "s")
                 return
         else:
             if not re.match(options.subject_regex, subject, flags=regex_flags):
                 logging.warning("Skipping message '%s' subject '%s' send to '%s' because it does not start with '%s' (case-%sensitive)",
-                                uid, subject, message.sent_to[0]['email'], options.subject_regex, "in" if options.subject_regex_ignore_case else "s")
+                                uid, subject, sent_to_display, options.subject_regex, "in" if options.subject_regex_ignore_case else "s")
                 return
 
     if options.sent_to_regex:
-        if not any(re.search(options.sent_to_regex, email['email'], flags=0) for email in message.sent_to):
+        if not any(re.search(options.sent_to_regex, email['email'], flags=0) for email in sent_to_list):
             logging.warning("Skipping message '%s' subject '%s' send to '%s' because '%s' was not found in any sent_to email",
-                            uid, subject, message.sent_to[0]['email'], options.sent_to_regex)
+                            uid, subject, sent_to_display, options.sent_to_regex)
             return
 
-    logging.info("Processing message '%s' subject '%s' send to '%s'", uid, subject, message.sent_to[0]['email'])
+    logging.info("Processing message '%s' subject '%s' send to '%s'", uid, subject, sent_to_display)
 
     for idx, attachment in enumerate(message.attachments):
         try:
@@ -97,7 +106,7 @@ def process_message(filename_template, options, message):
                                                          message_id=message.message_id,
                                                          date=parsed_message_date,
                                                          folder=folder,
-                                                         from_email=message.sent_from[0]['email'])
+                                                         from_email=sent_from_display)
 
             download_path = os.path.join(options.download_folder, download_filename)
             os.makedirs(os.path.dirname(os.path.abspath(download_path)), exist_ok=True)
