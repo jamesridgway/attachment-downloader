@@ -4,6 +4,6 @@ iso8601==2.1.0
 jinja2==3.1.6
 python-dateutil==2.9.0
 pylint==3.3.7
-pytest==8.4.0
+pytest==9.0.3
 pytest-cov==6.2.1
 pytz==2025.2
