@@ -15,6 +15,7 @@ from jinja2 import Template, UndefinedError
 from attachment_downloader.cli import valid_date, get_password
 from attachment_downloader.encoding import QuoPriEncoding
 from attachment_downloader.logging import Logger
+from attachment_downloader.smime import SmimeDecryptor, SmimeError
 from attachment_downloader.version_info import Version
 
 
@@ -32,6 +33,14 @@ def build_filter_options():
     return filter_options
 
 def process_message(filename_template, options, message):
+    if smime_decryptor:
+        try:
+            message = smime_decryptor.decrypt_message(message)
+        except SmimeError as e:
+            logging.error("Skipping message '%s' subject '%s' because it could not be decrypted: %s", uid,
+                          getattr(message, 'subject', ''), e)
+            return
+
     subject = ''
     if hasattr(message, 'subject'):
         subject = QuoPriEncoding.decode(message.subject)
@@ -169,6 +178,12 @@ if __name__ == '__main__':
     parser.add_option("--unsecure", dest="unsecure", action="store_true",
                       help="disable encrypted connection (not recommended)")
     parser.add_option("--starttls", dest="starttls", action="store_true", help="enable STARTTLS (not recommended)")
+    parser.add_option("--smime-key", dest="smime_key",
+                      help="Private key used to decrypt S/MIME encrypted emails (PEM, or a PKCS#12 .p12/.pfx bundle)")
+    parser.add_option("--smime-cert", dest="smime_cert",
+                      help="Certificate (PEM) used to decrypt S/MIME encrypted emails (optional for PKCS#12 bundles)")
+    parser.add_option("--smime-key-password", dest="smime_key_password",
+                      help="Password for the S/MIME private key or PKCS#12 bundle")
     parser.add_option("--log-level", dest="loglevel", default="INFO",
                       help="Set the log level to DEBUG, INFO, WARNING, ERROR, or CRITICAL (default is INFO)")
 
@@ -193,6 +208,16 @@ if __name__ == '__main__':
         parser.error('--delete parameter required when using --delete-copy-folder')
     if options.unsecure and options.starttls:
         parser.error('--unsecure and --starttls are exclusive')
+    if options.smime_cert and not options.smime_key:
+        parser.error('--smime-key parameter required when using --smime-cert')
+
+    smime_decryptor = None
+    if options.smime_key:
+        try:
+            smime_decryptor = SmimeDecryptor.load(options.smime_key, options.smime_cert, options.smime_key_password)
+        except SmimeError as e:
+            parser.error(str(e))
+        logging.info("S/MIME decryption enabled for certificate: %s", smime_decryptor.certificate.subject.rfc4514_string())
 
     tls = False if options.unsecure else True
     if options.starttls:
