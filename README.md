@@ -39,6 +39,14 @@ Usage:
                             143 otherwise
       --unsecure            disable encrypted connection (not recommended)
       --starttls            enable STARTTLS (not recommended)
+      --smime-key=SMIME_KEY
+                            Private key used to decrypt S/MIME encrypted emails
+                            (PEM, or a PKCS#12 .p12/.pfx bundle)
+      --smime-cert=SMIME_CERT
+                            Certificate (PEM) used to decrypt S/MIME encrypted
+                            emails (optional for PKCS#12 bundles)
+      --smime-key-password=SMIME_KEY_PASSWORD
+                            Password for the S/MIME private key or PKCS#12 bundle
 
 Example:
 
@@ -56,6 +64,23 @@ Date filtering can be performed by specifying one or both of the date arguments:
 Dates should be provided in ISO format, e.g: `2021-02-06T13:25:00` or `2021-02-06T13:25:00`.
 
 If a zone offset is not provided UTC will be assumed.
+
+### S/MIME Encrypted Emails
+Attachments can be extracted from S/MIME encrypted emails by providing the recipient's private key and certificate.
+
+Using a PEM private key and certificate:
+
+    --smime-key=private-key.pem --smime-cert=certificate.pem
+
+Using a PKCS#12 bundle (as exported from most mail clients), which contains both the key and certificate:
+
+    --smime-key=credentials.p12 --smime-key-password=pa55word
+
+As with the other options, these can also be provided via the `AD_SMIME_KEY`, `AD_SMIME_CERT` and
+`AD_SMIME_KEY_PASSWORD` environment variables.
+
+Encrypted emails which cannot be decrypted with the given credentials are logged and skipped. Unencrypted emails are
+processed as normal.
 
 ## Requirements
 This tool requires Python 3+
