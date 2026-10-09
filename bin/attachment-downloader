@@ -15,7 +15,7 @@ from jinja2 import Template, UndefinedError
 from attachment_downloader.cli import valid_date, get_password
 from attachment_downloader.encoding import QuoPriEncoding
 from attachment_downloader.logging import Logger
-from attachment_downloader.smime import SmimeDecryptor, SmimeError
+from attachment_downloader.smime import SmimeDecryptor, SmimeError, unwrap_message
 from attachment_downloader.version_info import Version
 
 
@@ -33,13 +33,12 @@ def build_filter_options():
     return filter_options
 
 def process_message(filename_template, options, message):
-    if smime_decryptor:
-        try:
-            message = smime_decryptor.decrypt_message(message)
-        except SmimeError as e:
-            logging.error("Skipping message '%s' subject '%s' because it could not be decrypted: %s", uid,
-                          getattr(message, 'subject', ''), e)
-            return
+    try:
+        message = unwrap_message(message, smime_decryptor)
+    except SmimeError as e:
+        logging.error("Skipping message '%s' subject '%s' because its S/MIME content could not be read: %s", uid,
+                      getattr(message, 'subject', ''), e)
+        return
 
     subject = ''
     if hasattr(message, 'subject'):

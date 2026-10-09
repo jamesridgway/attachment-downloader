@@ -82,6 +82,24 @@ As with the other options, these can also be provided via the `AD_SMIME_KEY`, `A
 Encrypted emails which cannot be decrypted with the given credentials are logged and skipped. Unencrypted emails are
 processed as normal.
 
+The following algorithms are supported:
+
+| Purpose            | Algorithms                                                       |
+| ------------------ | ---------------------------------------------------------------- |
+| Content encryption | AES-CBC and AES-GCM (128, 192 and 256 bit)                       |
+| RSA keys           | RSAES-PKCS1-v1_5 and RSAES-OAEP                                  |
+| EC keys            | ECDH (NIST curves) with the X9.63 KDF (SHA-1 or SHA-2) and AES key wrap |
+
+S/MIME support is implemented in Python on top of the `cryptography` package, so no additional tools (such as
+OpenSSL) need to be installed.
+
+### S/MIME Signed Emails
+Attachments are extracted from S/MIME signed emails automatically, including emails with an opaque signature
+(`application/pkcs7-mime; smime-type=signed-data`) and emails which are both signed and encrypted. No options are
+required for signed emails.
+
+Signatures are not verified. Use your mail client if you need to confirm who signed an email.
+
 ## Requirements
 This tool requires Python 3+
 
