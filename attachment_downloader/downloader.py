@@ -145,6 +145,7 @@ class AttachmentDownloader:
         """
         Download the attachments of a message if it matches the options, then delete it if requested.
         """
+        uid = uid.decode() if isinstance(uid, bytes) else uid
         subject = getattr(message, 'subject', '')
         try:
             message = unwrap_message(message, self.smime_decryptor)

@@ -51,6 +51,17 @@ class TestCli:
         options = parse_options(build_parser(), REQUIRED_ARGS, environ={'AD_DELETE': value})
         assert_that(options.delete).is_false()
 
+    def test_parse_options_from_environment_overrides_defaults(self):
+        options = parse_options(build_parser(), REQUIRED_ARGS, environ={
+            'AD_FILENAME_TEMPLATE': '{{ subject }}/{{ attachment_name }}', 'AD_LOGLEVEL': 'DEBUG'})
+        assert_that(options.filename_template).is_equal_to('{{ subject }}/{{ attachment_name }}')
+        assert_that(options.loglevel).is_equal_to('DEBUG')
+
+    def test_parse_options_command_line_flag_overrides_environment(self):
+        options = parse_options(build_parser(), REQUIRED_ARGS + ['--filename-template', '{{ date }}'],
+                                environ={'AD_FILENAME_TEMPLATE': '{{ subject }}'})
+        assert_that(options.filename_template).is_equal_to('{{ date }}')
+
     def test_parse_options_command_line_takes_precedence(self):
         options = parse_options(build_parser(), REQUIRED_ARGS, environ={'AD_HOST': 'other.example.com'})
         assert_that(options.host).is_equal_to('imap.example.com')
