@@ -1,0 +1,24 @@
+To: recipient@example.com
+From: sender@example.com
+Subject: aes256-gcm
+MIME-Version: 1.0
+Content-Disposition: attachment; filename="smime.p7m"
+Content-Type: application/pkcs7-mime; smime-type=authEnveloped-data; name="smime.p7m"
+Content-Transfer-Encoding: base64
+
+MIICsQYLKoZIhvcNAQkQARegggKgMIICnAIBADGCAU4wggFKAgEAMDIwGjEYMBYG
+A1UEAwwPcnNhQGV4YW1wbGUuY29tAhRReTqI87cm+iYP1243wB/qiQjnRzANBgkq
+hkiG9w0BAQEFAASCAQAmu9ze5EIBghGD90OBPcghN8k4w15qsZkOSztXPBi29z4y
+x0TA11lna+2WdgfYvlMF6EA5Kr/Jpkcyn4EqbpwOaNx8b+ikZNhDs1jR4JiWBkRz
+k2ZAxP0xJoZi1jbb4q9Xc5OGhfQwxCNEjYKOWXp7toaMUyqqRlzaQnmhJUD8ijSd
+VBLXJX1bSiij4YsM4XWOaf1B/EeMV2oqNMAu2C3yMBfO5/LTew8bZJ+nvyyl6Apu
+yFVDilyxQwG5KRMvSA8okFKRLPcxDr2N6qGFn4HTjCwiuaFGmrXx41hwO6yLfkj3
+QFy/4RcImYSvdBv6K1fHNl7ukHbUSY8tbQO9EuUaMIIBMQYJKoZIhvcNAQcBMB4G
+CWCGSAFlAwQBLjARBAxZbcf1XOf2DiO6GtoCARCAggECnuo3Zd764rTfbuWymW/+
+kLFnRDcMX5Vs6+jCg0iP0im3wKlEGgjRwHvoFX2yKUIBZyWY3t/L0HKDVqAo2LtL
+6wHx84kcwGQGB+k/VLRtvJHY4wECQbodmfQWYAXGLjyx8NELUqoBVg4wJYuCmgKn
+rppUfboHELI8SAdtoSlkjPM6//nCNv/X7rAMy0mi1qgtNHQqgc27qEgjbPFU5xOR
+FFev7pm9p6IUDvXCgEopY6XVoj+x1LoVmaF7FpZT/zgsFS8B+IpBHmIzC8oOntKG
+AW4eszUyCqwPv+iFsI3b158Y79iyaPoXGbl5/ZGpbq+H0hSqOKe+kBqg8X+wuELD
+RbDxBBAwKcTQVePlf4WsP1UhqhAw
+
