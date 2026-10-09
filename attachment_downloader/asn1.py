@@ -134,3 +134,15 @@ def _byte(data, offset):
     if offset >= len(data):
         raise Asn1Error('Unexpected end of data')
     return data[offset]
+
+
+def encode(identifier, content):
+    """
+    DER encode an element from its identifier octet and content.
+    """
+    if len(content) < 0x80:
+        length = bytes([len(content)])
+    else:
+        length_bytes = len(content).to_bytes((len(content).bit_length() + 7) // 8, 'big')
+        length = bytes([0x80 | len(length_bytes)]) + length_bytes
+    return bytes([identifier]) + length + content

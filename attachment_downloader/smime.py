@@ -6,15 +6,16 @@ import logging
 from email.policy import compat32
 
 from cryptography import x509
-from cryptography.hazmat.primitives.serialization import load_pem_private_key, pkcs7, pkcs12
+from cryptography.hazmat.primitives.serialization import load_pem_private_key, pkcs12
 from imbox.parser import parse_email
 
+from attachment_downloader import cms
 from attachment_downloader.asn1 import Asn1Error, decode
 
 SMIME_CONTENT_TYPES = ('application/pkcs7-mime', 'application/x-pkcs7-mime')
 
 OID_SIGNED_DATA = '1.2.840.113549.1.7.2'
-OID_ENVELOPED_DATA = '1.2.840.113549.1.7.3'
+ENCRYPTED_CONTENT_TYPES = (cms.OID_ENVELOPED_DATA, cms.OID_AUTH_ENVELOPED_DATA)
 
 # Guards against maliciously deep nesting of signed/encrypted layers
 MAX_NESTING = 5
@@ -41,9 +42,10 @@ def cms_content_type(email_message):
 
 def is_encrypted(email_message):
     """
-    Determine whether a parsed email.message.Message is an S/MIME encrypted (enveloped-data) message.
+    Determine whether a parsed email.message.Message is an S/MIME encrypted (enveloped-data or authenticated
+    enveloped-data) message.
     """
-    return cms_content_type(email_message) == OID_ENVELOPED_DATA
+    return cms_content_type(email_message) in ENCRYPTED_CONTENT_TYPES
 
 
 def signed_content(der_data):
@@ -81,14 +83,16 @@ def unwrap_message(message, decryptor=None):
         content_type = cms_content_type(inner_message)
         if content_type == OID_SIGNED_DATA:
             content = signed_content(inner_message.get_payload(decode=True))
-        elif content_type == OID_ENVELOPED_DATA:
+        elif content_type in ENCRYPTED_CONTENT_TYPES:
             if decryptor is None:
                 logging.warning("Message '%s' is S/MIME encrypted, provide --smime-key to decrypt it",
                                 getattr(message, 'message_id', ''))
                 break
             content = decryptor.decrypt(inner_message.get_payload(decode=True))
-        else:
+        elif content_type is None:
             break
+        else:
+            raise SmimeError(f'Unsupported S/MIME content type: {content_type}')
         inner_message = email.message_from_bytes(content, policy=compat32)
     else:
         raise SmimeError(f'S/MIME message is nested more than {MAX_NESTING} levels deep')
@@ -165,9 +169,9 @@ class SmimeDecryptor:
 
     def decrypt(self, der_data):
         """
-        Decrypt a DER encoded enveloped-data CMS structure, returning the decrypted content.
+        Decrypt an enveloped-data or authenticated enveloped-data CMS structure, returning the decrypted content.
         """
         try:
-            return pkcs7.pkcs7_decrypt_der(der_data, self.certificate, self.private_key, [])
-        except ValueError as ex:
+            return cms.decrypt(der_data, self.certificate, self.private_key)
+        except cms.CmsError as ex:
             raise SmimeError(f'Unable to decrypt S/MIME message: {ex}') from ex
