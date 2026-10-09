@@ -8,6 +8,10 @@ TAG_CLASS_CONTEXT = 2
 TAG_INTEGER = 2
 TAG_OCTET_STRING = 4
 TAG_OID = 6
+TAG_SEQUENCE = 16
+TAG_SET = 17
+
+CONSTRUCTED = 0x20
 
 
 class Asn1Error(ValueError):
@@ -23,7 +27,7 @@ class Element:
 
     def __init__(self, identifier, tag_number, content, raw):
         self.tag_class = identifier >> 6
-        self.constructed = bool(identifier & 0x20)
+        self.constructed = bool(identifier & CONSTRUCTED)
         self.tag_number = tag_number
         self.content = content
         self.raw = raw
@@ -41,6 +45,12 @@ class Element:
             children.append(child)
         return children
 
+    def is_universal(self, tag_number):
+        """
+        Whether this is a universal element, such as a SEQUENCE or OCTET STRING, with the given tag number.
+        """
+        return self.tag_class == TAG_CLASS_UNIVERSAL and self.tag_number == tag_number
+
     def is_context(self, tag_number):
         """
         Whether this is a context-specific element ([n]) with the given tag number.
@@ -55,6 +65,12 @@ class Element:
             return b''.join(child.octets() for child in self.children())
         return self.content
 
+    def bit_string(self):
+        """
+        Value of a BIT STRING whose length is a whole number of octets.
+        """
+        return self.content[1:]
+
     def integer(self):
         """
         Value of an INTEGER.
@@ -65,7 +81,7 @@ class Element:
         """
         Value of an OBJECT IDENTIFIER in dotted notation.
         """
-        if self.tag_class != TAG_CLASS_UNIVERSAL or self.tag_number != TAG_OID or not self.content:
+        if not self.is_universal(TAG_OID) or not self.content:
             raise Asn1Error('Element is not an OBJECT IDENTIFIER')
         arcs = []
         value = 0
@@ -93,7 +109,7 @@ def read_element(data, offset):
     start = offset
     identifier = _byte(data, offset)
     offset += 1
-    constructed = bool(identifier & 0x20)
+    constructed = bool(identifier & CONSTRUCTED)
     tag_number = identifier & 0x1f
     if tag_number == 0x1f:
         tag_number = 0
@@ -136,10 +152,35 @@ def _byte(data, offset):
     return data[offset]
 
 
-def encode(identifier, content):
+def encode_sequence(content):
     """
-    DER encode an element from its identifier octet and content.
+    DER encode a SEQUENCE from its encoded elements.
     """
+    return _encode(CONSTRUCTED | TAG_SEQUENCE, content)
+
+
+def encode_set(content):
+    """
+    DER encode a SET from its encoded elements.
+    """
+    return _encode(CONSTRUCTED | TAG_SET, content)
+
+
+def encode_octet_string(value):
+    """
+    DER encode an OCTET STRING.
+    """
+    return _encode(TAG_OCTET_STRING, value)
+
+
+def encode_explicit(tag_number, element):
+    """
+    DER encode an explicitly tagged ([n] EXPLICIT) element.
+    """
+    return _encode((TAG_CLASS_CONTEXT << 6) | CONSTRUCTED | tag_number, element)
+
+
+def _encode(identifier, content):
     if len(content) < 0x80:
         length = bytes([len(content)])
     else:

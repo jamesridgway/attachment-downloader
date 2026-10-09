@@ -5,8 +5,8 @@ import pytest
 from assertpy import assert_that
 from imbox.parser import parse_email
 
-from attachment_downloader.cms import CmsError, decrypt
-from attachment_downloader.smime import SmimeDecryptor, SmimeError, is_encrypted, unwrap_message
+from attachment_downloader.cms import CmsError, ENCRYPTED_CONTENT_TYPES, content_type, decrypt
+from attachment_downloader.smime import SmimeDecryptor, SmimeError, unwrap_message
 
 FIXTURES = pathlib.Path(__file__).parent.parent / 'fixtures' / 'smime'
 
@@ -28,7 +28,7 @@ class TestCms:
                              [(name, 'ec') for name in EC_FIXTURES])
     def test_unwrap_message(self, name, key_type):
         message = parse_email((FIXTURES / f'{name}.eml').read_bytes())
-        assert_that(is_encrypted(email.message_from_string(message.raw_email))).is_true()
+        assert_that(content_type(fixture_payload(name))).is_in(*ENCRYPTED_CONTENT_TYPES)
 
         unwrapped = unwrap_message(message, load_decryptor(key_type))
 
