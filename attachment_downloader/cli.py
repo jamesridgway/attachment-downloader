@@ -16,7 +16,7 @@ from iso8601 import iso8601
 from jinja2 import Template, TemplateError
 
 from attachment_downloader.downloader import AttachmentDownloader, validate_filename_template
-from attachment_downloader.logging import Logger
+from attachment_downloader.logging import LEVELS, Logger
 from attachment_downloader.smime import SmimeDecryptor, SmimeError
 from attachment_downloader.version_info import Version
 
@@ -142,6 +142,8 @@ def validate_options(parser, options):
         parser.error('--unsecure and --starttls are exclusive')
     if options.smime_cert and not options.smime_key:
         parser.error('--smime-key parameter required when using --smime-cert')
+    if options.loglevel.upper() not in LEVELS:
+        parser.error(f'--log-level must be one of {", ".join(LEVELS)}')
 
 
 def load_filename_template(parser, source):

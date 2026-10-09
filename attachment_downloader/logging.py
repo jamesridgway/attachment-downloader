@@ -4,6 +4,9 @@ Common logger functionality.
 import logging
 import sys
 
+LEVELS = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
+FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
+
 
 class Logger:
     """
@@ -12,17 +15,16 @@ class Logger:
     @staticmethod
     def setup(level):
         """
-        Setup root logger and logging levels.
+        Log messages below WARNING to stdout, and WARNING and above to stderr.
         """
         std_out_stream_handler = logging.StreamHandler(sys.stdout)
-        std_out_stream_handler.setLevel(logging.getLevelName(level))
-        std_out_stream_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        std_out_stream_handler.addFilter(lambda record: record.levelno < logging.WARNING)
 
         std_err_stream_handler = logging.StreamHandler(sys.stderr)
         std_err_stream_handler.setLevel(logging.WARNING)
-        std_err_stream_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 
         root_logger = logging.getLogger()
-        root_logger.setLevel(logging.INFO)
-        root_logger.addHandler(std_out_stream_handler)
-        root_logger.addHandler(std_err_stream_handler)
+        root_logger.setLevel(level.upper())
+        for handler in (std_out_stream_handler, std_err_stream_handler):
+            handler.setFormatter(logging.Formatter(FORMAT))
+            root_logger.addHandler(handler)

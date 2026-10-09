@@ -61,6 +61,7 @@ class TestCli:
         (REQUIRED_ARGS + ['--unsecure', '--starttls'], {}),
         (REQUIRED_ARGS + ['--smime-cert', 'cert.pem'], {}),
         (REQUIRED_ARGS, {'AD_PORT': 'not a number'}),
+        (REQUIRED_ARGS + ['--log-level', 'LOUD'], {}),
     ])
     def test_parse_options_invalid(self, args, environ):
         with pytest.raises(SystemExit):
