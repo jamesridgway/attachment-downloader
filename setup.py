@@ -1,23 +1,36 @@
 import os
+import subprocess
 
 from setuptools import setup, find_packages
 
-from attachment_downloader.version_info import Version
+ROOT = os.path.abspath(os.path.dirname(__file__))
 
-Version.generate()
 
-with open(os.path.abspath(os.path.join(os.path.dirname(__file__), 'requirements.txt'))) as f:
-    install_reqs = f.read().splitlines()
+def read(filename):
+    with open(os.path.join(ROOT, filename), encoding='utf-8') as file:
+        return file.read()
+
+
+def version():
+    if os.path.exists(os.path.join(ROOT, 'PKG-INFO')):
+        return next(line.split(':', 1)[1].strip() for line in read('PKG-INFO').splitlines()
+                    if line.startswith('Version:'))
+    tag = subprocess.run(['git', 'describe', '--always', '--tags'], cwd=ROOT, capture_output=True, text=True,
+                         check=True).stdout.strip()
+    return tag.split('-g', maxsplit=1)[0].replace('-', '.') if '-g' in tag else tag
+
 
 setup(
     name='attachment-downloader',
-    version=Version.get(),
+    version=version(),
     description='Simple tool for downloading email attachments for all emails in a given folder using an IMAP client.',
-    long_description=open('README.rst').read(),
+    long_description=read('README.md'),
+    long_description_content_type='text/markdown',
     author='James Ridgway',
     url='https://github.com/jamesridgway/attachment-downloader',
     license='MIT',
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests', 'tests.*']),
+    python_requires='>=3.10',
     scripts=['bin/attachment-downloader'],
-    install_requires=install_reqs
+    install_requires=read('requirements.txt').splitlines()
 )

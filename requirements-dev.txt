@@ -1,0 +1,6 @@
+-r requirements.txt
+assertpy==1.1
+pylint==3.3.7
+pytest==9.0.3
+pytest-cov==6.2.1
+pytz==2025.2
