@@ -12,7 +12,8 @@ from cryptography.hazmat.primitives.serialization import pkcs7, pkcs12
 from cryptography.x509.oid import NameOID
 from imbox.parser import parse_email
 
-from attachment_downloader.smime import SmimeDecryptor, SmimeError, is_encrypted, unwrap_message
+from attachment_downloader import cms
+from attachment_downloader.smime import SmimeDecryptor, SmimeError, unwrap_message
 
 FIXTURES = pathlib.Path(__file__).parent.parent / 'fixtures' / 'smime'
 
@@ -64,6 +65,10 @@ def sign(data, key, cert, options=()):
                                 .sign(serialization.Encoding.DER, list(options)))
 
 
+def payload(entity):
+    return email.message_from_bytes(entity).get_payload(decode=True)
+
+
 def encrypted_message(cert):
     return parse_email(OUTER_HEADERS + encrypt(INNER_MESSAGE, cert))
 
@@ -74,20 +79,15 @@ def credentials_fixture():
 
 
 class TestSmime:
-    def test_is_encrypted(self, credentials):
-        _, cert = credentials
-        assert_that(is_encrypted(email.message_from_string(encrypted_message(cert).raw_email))).is_true()
-        assert_that(is_encrypted(email.message_from_bytes(OUTER_HEADERS + INNER_MESSAGE))).is_false()
-
-    def test_is_encrypted_ignores_signed_data(self, credentials):
+    def test_content_type(self, credentials):
         key, cert = credentials
-        assert_that(is_encrypted(email.message_from_bytes(sign(INNER_MESSAGE, key, cert)))).is_false()
+        assert_that(cms.content_type(payload(encrypt(INNER_MESSAGE, cert)))).is_equal_to(cms.OID_ENVELOPED_DATA)
+        assert_that(cms.content_type(payload(sign(INNER_MESSAGE, key, cert)))).is_equal_to(cms.OID_SIGNED_DATA)
 
-    def test_is_encrypted_invalid_structure(self):
-        message = email.message_from_bytes(
-            b'Content-Type: application/pkcs7-mime; smime-type=enveloped-data\r\n'
-            b'Content-Transfer-Encoding: base64\r\n\r\nbm90IGFzbjE=\r\n')
-        assert_that(is_encrypted).raises(SmimeError).when_called_with(message)
+    def test_unwrap_message_invalid_structure(self):
+        message = parse_email(OUTER_HEADERS + b'Content-Type: application/pkcs7-mime; smime-type=enveloped-data\r\n'
+                              b'Content-Transfer-Encoding: base64\r\n\r\nbm90IGFzbjE=\r\n')
+        assert_that(unwrap_message).raises(SmimeError).when_called_with(message)
 
     def test_decrypt_message(self, credentials):
         key, cert = credentials
@@ -156,7 +156,7 @@ class TestSmime:
         assert_that(unwrap_message) \
             .raises(SmimeError) \
             .when_called_with(message) \
-            .is_equal_to('S/MIME signed-data does not contain any content')
+            .is_equal_to('CMS signed-data does not contain any content')
 
     def test_unwrap_message_nested_too_deep(self, credentials):
         key, cert = credentials
@@ -186,7 +186,7 @@ class TestSmime:
         assert_that(SmimeDecryptor.load) \
             .raises(SmimeError) \
             .when_called_with(str(key_path)) \
-            .is_equal_to('--smime-cert is required when --smime-key is a PEM private key')
+            .is_equal_to('A certificate is required when the private key is in PEM format')
 
     def test_load_pkcs12(self, credentials, tmp_path):
         key, cert = credentials
