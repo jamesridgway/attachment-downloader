@@ -184,13 +184,35 @@ Flags such as `AD_DELETE` are enabled by `1`, `true`, `yes` or `on`, and disable
 Set `AD_INTERVAL` to a number of seconds to keep running, checking the mailbox again after each interval.
 
 ## Docker
-A Dockerfile is included, which is configured using the environment variables above:
+A Docker image is published to the GitHub Container Registry for each release, for `linux/amd64` and `linux/arm64`:
 
-    $ docker build -t attachment-downloader .
-    $ docker run --rm -v ~/Downloads:/downloads \
-        -e AD_HOST=imap.example.com -e AD_USERNAME=mail@example.com -e AD_PASSWORD=pa55word \
-        -e AD_IMAP_FOLDER=invoices -e AD_DOWNLOAD_FOLDER=/downloads -e AD_INTERVAL=3600 \
-        attachment-downloader
+    $ docker run --rm -v ~/Downloads:/downloads ghcr.io/jamesridgway/attachment-downloader \
+        --host imap.example.com --username mail@example.com --password pa55word --imap-folder invoices
+
+Attachments are saved to `/downloads` in the container, so mount the folder you want them in there. Options can be
+passed as arguments, as above, or as [environment variables](#environment-variables), which suits Docker Compose:
+
+```yaml
+services:
+  attachment-downloader:
+    image: ghcr.io/jamesridgway/attachment-downloader:1
+    restart: unless-stopped
+    volumes:
+      - ./downloads:/downloads
+    environment:
+      AD_HOST: imap.example.com
+      AD_USERNAME: mail@example.com
+      AD_PASSWORD: pa55word
+      AD_IMAP_FOLDER: invoices
+      AD_INTERVAL: 3600
+```
+
+The `latest`, major (`1`), minor (`1.4`) and exact version tags are available.
+
+The container runs as user ID 1000. If your downloads folder is owned by a different user, add
+`--user $(id -u):$(id -g)` to `docker run` (or `user:` in Docker Compose).
+
+To use S/MIME, mount your key and certificate and point `AD_SMIME_KEY` and `AD_SMIME_CERT` at them.
 
 ## Release Notes
 See [GitHub Releases](https://github.com/jamesridgway/attachment-downloader/releases).

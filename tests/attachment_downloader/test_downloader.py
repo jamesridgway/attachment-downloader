@@ -108,6 +108,10 @@ class TestAttachmentDownloader:
         assert_that(mailbox.copied).is_equal_to([('1', '"Archive"')])
         assert_that(mailbox.deleted).is_equal_to(['1'])
 
+    def test_delete_with_bytes_uid(self, tmp_path):
+        mailbox = run(tmp_path, [(b'7', build_message())], delete=True)
+        assert_that(mailbox.deleted).is_equal_to(['7'])
+
     def test_delete_skips_messages_without_downloads(self, tmp_path):
         mailbox = run(tmp_path, [('1', build_message())], delete=True, filename_regex=r'\.docx$')
         assert_that(mailbox.deleted).is_empty()

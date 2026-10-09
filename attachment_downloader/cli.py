@@ -101,15 +101,12 @@ def parse_options(parser, args=None, environ=None):
     Parse the command line, using AD_<OPTION> environment variables for any option that is not given.
     """
     environ = os.environ if environ is None else environ
-    options, _ = parser.parse_args(args)
-
     for option in parser.option_list:
-        if not option.dest or getattr(options, option.dest):
-            continue
-        value = environ.get(ENVIRONMENT_PREFIX + option.dest.upper())
+        value = environ.get(ENVIRONMENT_PREFIX + option.dest.upper()) if option.dest else None
         if value:
-            setattr(options, option.dest, environment_value(parser, option, value))
+            parser.set_default(option.dest, environment_value(parser, option, value))
 
+    options, _ = parser.parse_args(args)
     validate_options(parser, options)
     return options
 
