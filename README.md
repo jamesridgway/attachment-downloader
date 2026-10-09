@@ -82,6 +82,13 @@ As with the other options, these can also be provided via the `AD_SMIME_KEY`, `A
 Encrypted emails which cannot be decrypted with the given credentials are logged and skipped. Unencrypted emails are
 processed as normal.
 
+### S/MIME Signed Emails
+Attachments are extracted from S/MIME signed emails automatically, including emails with an opaque signature
+(`application/pkcs7-mime; smime-type=signed-data`) and emails which are both signed and encrypted. No options are
+required for signed emails.
+
+Signatures are not verified. Use your mail client if you need to confirm who signed an email.
+
 ## Requirements
 This tool requires Python 3+
 
